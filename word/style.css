@@ -1,0 +1,81 @@
+/* 초등 용어 과외 100강 — 대문 & 수업 페이지 공용 */
+:root{
+  --bg:#FFF9F0; --ink:#2D2A26; --muted:#8A7F72;
+  --card:#FFFFFF; --accent:#E8833A; --accent-soft:#FDEBD7;
+  --line:#F0E4D3; --good:#2E9E5B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  line-height:1.9;font-size:17px}
+.wrap{max-width:880px;margin:0 auto;padding:32px 24px 80px}
+/* 대문 히어로 */
+.hero-site{text-align:center;padding:72px 24px 48px}
+.hero-site .kicker{font-size:15px;color:var(--muted);letter-spacing:2px}
+.hero-site h1{font-size:44px;margin:16px 0 8px}
+.hero-site p{color:var(--muted);font-size:18px}
+.progress{max-width:560px;margin:32px auto 0;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:20px 24px}
+.progress .bar{height:12px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
+.progress .bar > div{height:100%;width:0;background:var(--accent);border-radius:8px;transition:width .4s}
+.search{max-width:560px;margin:24px auto 0;display:block;width:100%;
+  padding:14px 20px;font-size:17px;border:2px solid var(--line);border-radius:999px;background:#fff}
+.search:focus{outline:none;border-color:var(--accent)}
+/* 유닛 */
+.unit{margin:56px 0}
+.unit-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.unit-head h2{font-size:26px;margin:0}
+.unit-head .desc{color:var(--muted);font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:20px}
+.lesson-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:20px;text-decoration:none;color:inherit;display:block;transition:transform .15s, box-shadow .15s}
+.lesson-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.lesson-card .no{font-size:13px;color:var(--muted)}
+.lesson-card .term{font-size:22px;font-weight:800;margin:4px 0}
+.lesson-card .hanja{font-size:14px;color:var(--muted)}
+.lesson-card .one{font-size:14px;color:#5b5348;margin-top:8px}
+.lesson-card .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.dot{font-size:13px;padding:4px 12px;border-radius:999px;background:#F3EFE7;color:var(--muted)}
+.dot.done{background:#DFF3E6;color:var(--good)}
+.check{font-size:13px;color:var(--accent);cursor:pointer;user-select:none}
+/* 수업 페이지 */
+.lesson-top{display:flex;justify-content:space-between;align-items:center;
+  max-width:880px;margin:0 auto;padding:28px 24px 0}
+.lesson-no{font-size:20px;font-weight:800}
+.status-badge{font-size:14px;background:var(--accent-soft);color:#9A5B1E;
+  padding:6px 16px;border-radius:999px}
+.hero{text-align:center;padding:48px 24px 56px}
+.hero-label{font-size:14px;letter-spacing:3px;color:var(--muted)}
+.hero-term{font-size:72px;margin:12px 0 4px;letter-spacing:4px}
+.hanja-line{font-size:20px;color:var(--muted)}
+.hero-def{font-size:20px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:40px;margin:32px 0}
+.card h2{font-size:24px;margin:0 0 20px}
+.card h3{font-size:19px;margin:32px 0 12px}
+.card h4{font-size:17px;margin:0 0 8px}
+.key{font-size:19px;font-weight:800;background:var(--accent-soft);
+  border-radius:12px;padding:16px 20px;margin:24px 0}
+.hanja-big{font-size:56px;text-align:center;letter-spacing:16px;margin:24px 0}
+.hanja-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.hanja-cols>div{background:#FBF7EF;border-radius:12px;padding:20px}
+.ex{color:var(--muted);font-size:14px}
+.dialog{background:#FBF7EF;border-radius:12px;padding:24px;margin:20px 0}
+.dialog p{margin:10px 0}
+.emoji-line{font-size:40px;text-align:center;margin:24px 0;letter-spacing:8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two-col>div{background:#FBF7EF;border-radius:12px;padding:20px}
+table{width:100%;border-collapse:collapse;margin:20px 0;font-size:15px}
+th{background:#F6EEDF;text-align:left}
+th,td{border:1px solid var(--line);padding:12px 14px;vertical-align:top}
+ol.steps li,ol.quiz li{margin:14px 0}
+.tip{background:#EFF7F1;border-radius:12px;padding:16px 20px;margin-top:20px}
+.highlight{background:#FFF3E2;border:2px solid var(--accent)}
+.pager{display:flex;justify-content:space-between;margin:48px 0 24px}
+.pager a{color:var(--accent);text-decoration:none;font-weight:700}
+.foot{text-align:center;color:var(--muted);font-size:14px;padding:32px 0}
+@media(max-width:640px){
+  .hero-term{font-size:52px}
+  .hanja-cols,.two-col{grid-template-columns:1fr}
+  .hero-site h1{font-size:32px}
+}
