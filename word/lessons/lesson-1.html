@@ -106,11 +106,26 @@
 </section>
 <section class="card">
   <h2>7. 오늘의 실전 과외 문제</h2>
-  <ol class="quiz">
-    <li>🔴 🔵 🟥 🟦 를 빨간색과 파란색으로 나눴어. 무엇을 기준으로 분류했을까?<br><span class="ex">보기: 모양 / 색깔 / 크기 → 정답: 색깔</span></li>
-    <li>사과, 바나나, 자동차, 기차를 과일과 탈것으로 나누었어. 이것도 분류일까?<br><span class="ex">보기: 맞아 / 아니야 → 정답: 맞아</span></li>
-    <li>빨간 네모와 파란 네모는 색깔이 달라. 같은 모양끼리 분류할 때 함께 놓을 수 있을까?<br><span class="ex">보기: 함께 놓을 수 있어 / 함께 놓으면 안 돼 → 정답: 함께 놓을 수 있어</span></li>
-  </ol>
+  <h2>7. 오늘의 실전 과외 문제</h2>
+  <div class="quiz-q" data-answer="1">
+    <p class="q-text"><strong>1.</strong> 🔴 🔵 🟥 🟦 를 빨간색과 파란색으로 나눴어. 무엇을 기준으로 분류했을까?</p>
+    <label class="q-opt"><input type="radio" name="q1-1" value="0"> 모양</label>
+    <label class="q-opt"><input type="radio" name="q1-1" value="1"> 색깔</label>
+    <label class="q-opt"><input type="radio" name="q1-1" value="2"> 크기</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>2.</strong> 사과, 바나나, 자동차, 기차를 과일과 탈것으로 나누었어. 이것도 분류일까?</p>
+    <label class="q-opt"><input type="radio" name="q1-2" value="0"> 맞아</label>
+    <label class="q-opt"><input type="radio" name="q1-2" value="1"> 아니야</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>3.</strong> 빨간 네모와 파란 네모는 색깔이 달라. 같은 모양끼리 분류할 때 함께 놓을 수 있을까?</p>
+    <label class="q-opt"><input type="radio" name="q1-3" value="0"> 함께 놓을 수 있어</label>
+    <label class="q-opt"><input type="radio" name="q1-3" value="1"> 함께 놓으면 안 돼</label>
+    <p class="q-feedback"></p>
+  </div>
 </section>
 <section class="card highlight">
   <h2>🎯 오늘 아빠가 반드시 기억할 것</h2>
@@ -122,5 +137,6 @@
 <nav class="pager"><a href="../index.html">🏠 대문으로</a><span></span><a href="lesson-2.html">2강 →</a></nav>
 <footer class="foot">서윤 아빠의 과외 교실 · 초등 국어·수학 용어 100강</footer>
 </main>
+<script src="../quiz.js"></script>
 </body>
 </html>
