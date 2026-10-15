@@ -112,11 +112,25 @@
 </section>
 <section class="card">
   <h2>7. 오늘의 실전 과외 문제</h2>
-  <ol class="quiz">
-    <li>사과와 수박 중 어느 것이 더 무거울까요?<br><span class="ex">보기: 사과 / 수박 → 정답: 수박 (비교한 것: 무게)</span></li>
-    <li>"어제보다 오늘이 더 따뜻해요." 이 문장에서 비교한 두 가지는 무엇일까요?<br><span class="ex">보기: 어제와 오늘 / 오늘과 내일 → 정답: 어제와 오늘</span></li>
-    <li>빨간 연필과 파란 연필의 길이를 견주어 보았어요. 이때 기준(무엇을 보고 비교했는지)은 무엇일까요?<br><span class="ex">보기: 색깔 / 길이 → 정답: 길이</span></li>
-  </ol>
+  <h2>7. 오늘의 실전 과외 문제</h2>
+  <div class="quiz-q" data-answer="1">
+    <p class="q-text"><strong>1.</strong> 사과와 수박 중 어느 것이 더 무거울까요?</p>
+    <label class="q-opt"><input type="radio" name="q3-1" value="0"> 사과</label>
+    <label class="q-opt"><input type="radio" name="q3-1" value="1"> 수박</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>2.</strong> "어제보다 오늘이 더 따뜻해요." 이 문장에서 비교한 두 가지는 무엇일까요?</p>
+    <label class="q-opt"><input type="radio" name="q3-2" value="0"> 어제와 오늘</label>
+    <label class="q-opt"><input type="radio" name="q3-2" value="1"> 오늘과 내일</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="1">
+    <p class="q-text"><strong>3.</strong> 빨간 연필과 파란 연필의 길이를 견주어 보았어요. 이때 기준(무엇을 보고 비교했는지)은 무엇일까요?</p>
+    <label class="q-opt"><input type="radio" name="q3-3" value="0"> 색깔</label>
+    <label class="q-opt"><input type="radio" name="q3-3" value="1"> 길이</label>
+    <p class="q-feedback"></p>
+  </div>
 </section>
 <section class="card highlight">
   <h2>🎯 오늘 아빠가 반드시 기억할 것</h2>
@@ -129,5 +143,6 @@
 <nav class="pager"><a href="../index.html">🏠 대문으로</a><a href="lesson-2.html">← 2강</a><a href="lesson-4.html">4강 →</a></nav>
 <footer class="foot">서윤 아빠의 과외 교실 · 초등 국어·수학 용어 100강</footer>
 </main>
+<script src="../quiz.js"></script>
 </body>
 </html>
