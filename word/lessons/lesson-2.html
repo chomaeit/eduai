@@ -102,11 +102,28 @@
 </section>
 <section class="card">
   <h2>7. 오늘의 실전 과외 문제</h2>
-  <ol class="quiz">
-    <li>키 순서대로 줄을 섰어요. 이때 기준은 무엇일까요?<br><span class="ex">보기: 키 / 나이 / 이름 → 정답: 키</span></li>
-    <li>도형을 색깔별로 나누었어요. 기준은 무엇일까요?<br><span class="ex">보기: 색깔 / 모양 / 크기 → 정답: 색깔</span></li>
-    <li>"제일 맛있는 간식을 골라 봐"라는 말에서 기준은 무엇일까요?<br><span class="ex">보기: 맛 / 가격 / 포장지 색깔 → 정답: 맛</span></li>
-  </ol>
+  <h2>7. 오늘의 실전 과외 문제</h2>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>1.</strong> 키 순서대로 줄을 섰어요. 이때 기준은 무엇일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-1" value="0"> 키</label>
+    <label class="q-opt"><input type="radio" name="q2-1" value="1"> 나이</label>
+    <label class="q-opt"><input type="radio" name="q2-1" value="2"> 이름</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>2.</strong> 도형을 색깔별로 나누었어요. 기준은 무엇일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-2" value="0"> 색깔</label>
+    <label class="q-opt"><input type="radio" name="q2-2" value="1"> 모양</label>
+    <label class="q-opt"><input type="radio" name="q2-2" value="2"> 크기</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>3.</strong> "제일 맛있는 간식을 골라 봐"라는 말에서 기준은 무엇일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-3" value="0"> 맛</label>
+    <label class="q-opt"><input type="radio" name="q2-3" value="1"> 가격</label>
+    <label class="q-opt"><input type="radio" name="q2-3" value="2"> 포장지 색깔</label>
+    <p class="q-feedback"></p>
+  </div>
 </section>
 <section class="card highlight">
   <h2>🎯 오늘 아빠가 반드시 기억할 것</h2>
@@ -118,5 +135,6 @@
 <nav class="pager"><a href="../index.html">🏠 대문으로</a><a href="lesson-1.html">← 1강</a><a href="lesson-3.html">3강 →</a></nav>
 <footer class="foot">서윤 아빠의 과외 교실 · 초등 국어·수학 용어 100강</footer>
 </main>
+<script src="../quiz.js"></script>
 </body>
 </html>
