@@ -90,3 +90,9 @@ ol.steps li,ol.quiz li{margin:14px 0}
 .q-feedback{font-size:17px;font-weight:800;margin:14px 0 0;min-height:1.8em}
 .q-feedback.ok{color:var(--good)}
 .q-feedback.no{color:#C0392B}
+/* 과정 연결 */
+.track-links{margin:24px 0;text-align:center}
+.track-links a{display:inline-block;background:#fff;border:2px solid var(--accent);
+  color:var(--accent);font-weight:800;padding:10px 28px;border-radius:999px;text-decoration:none}
+.stars{font-size:14px;color:var(--accent);font-weight:700}
+.hero-kid{font-size:18px;margin-top:8px;color:#5b5348}
