@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>56번 반올림 | 문제 풀이 지시어 66강</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header class="lesson-top">
+  <div class="lesson-no">📝 56번 <span class="stars">★ 특정 유형에서 활용</span></div>
+  <div class="status-badge">✅ 수업 완료</div>
+</header>
+<main class="wrap">
+<section class="hero">
+  <div class="hero-label">오늘의 핵심 표현</div>
+  <h1 class="hero-term">반올림</h1>
+  <div class="hanja-line">반올림 (순우리말)</div>
+  <p class="hero-def"><strong>정확한 의미:</strong> 정해진 자리 아래 숫자를 보고 가까운 값으로 나타내는 방법</p>
+  <p class="hero-kid">👧 아이에게는: "가까운 십이나 백 같은 수로 바꾸는 방법이야."</p>
+</section>
+<section class="card">
+  <h2>1. 먼저 아빠가 정확하게 이해하기</h2>
+  <h3>① 사전적 정의</h3>
+  <p>표준국어대사전에서는 반올림을 <strong>"어떤 자리 아래의 수를 버리되, 그 자리의 수가 5 이상이면 올리고 4 이하면 버리는 일"</strong>이라 풀이합니다.</p>
+  <ul>
+    <li><strong>어떤 자리 아래의 수를:</strong> 기준이 되는 자리를 먼저 정합니다. "십의 자리에서 반올림"처럼 자리가 정해져야 합니다.</li>
+    <li><strong>5 이상이면 올리고:</strong> 기준 자리 바로 아래의 수가 5, 6, 7, 8, 9이면 윗자리에 1을 더합니다.</li>
+    <li><strong>4 이하면 버리는:</strong> 기준 자리 바로 아래의 수가 0, 1, 2, 3, 4이면 그냥 버립니다.</li>
+  </ul>
+  <p><strong>문제에서의 쓰임:</strong> 문제에 "십의 자리에서 반올림하세요"라고 나오면 아이는 일의 자리를 보고 판단해야 합니다. "47을 십의 자리에서 반올림하면?" → 일의 자리 7이 5 이상이므로 올림 → 50입니다. 반드시 "어느 자리에서"를 먼저 확인하는 것이 핵심입니다.</p>
+  <h3>② 말뜻 풀이</h3>
+  <p>'반올림'은 한자가 없는 순우리말입니다. '반'(半, 절반=5)과 '올림'이 합쳐진 말입니다. <strong>5를 기준으로 올릴지 버릴지를 정한다</strong>는 뜻이 말 그대로 담겨 있습니다. 5 이상이면 올리고, 5에 못 미치면(4 이하) 버립니다.</p>
+  <p class="key">반올림 = 정해진 자리 아래 숫자를 보고 5 이상은 올리고 4 이하는 버려 가까운 값으로 나타내는 방법</p>
+</section>
+<section class="card">
+  <h2>2. 7세 아이에게 어떻게 설명할까?</h2>
+  <p><strong>"가까운 십이나 백 같은 수로 바꾸는 방법이야."</strong>라고 시작하십시오.</p>
+  <div class="dialog">
+    <p>아빠: "서윤아, 47에서 가까운 십의 수는 뭐야? 40이랑 50 중에?"</p>
+    <p>아이: "50!"</p>
+    <p>아빠: "맞아. 이렇게 가까운 수로 바꾸는 데 규칙이 있어. 일의 자리가 5 이상이면 올리고, 4 이하면 버리는 거야."</p>
+    <p>아이: "47의 일의 자리는 7이니까 올리는 거네!"</p>
+    <p>아빠: "정확해! 그래서 47은 50이 돼. 이걸 '반올림'이라고 해."</p>
+  </div>
+  <p>수직선을 그려 보십시오. <strong>47이 40과 50 중 어디에 더 가까운지</strong> 눈에 보이면 "5 이상 올림, 4 이하 버림"의 규칙이 자연스럽게 이해됩니다.</p>
+</section>
+<section class="card">
+  <h2>3. 핵심 포인트</h2>
+  <p>이 부분이 오늘 수업의 핵심입니다. 반올림에는 두 가지 헷갈리는 점이 있습니다.</p>
+  <div class="two-col">
+    <div><div class="emoji-line">5️⃣6️⃣7️⃣8️⃣9️⃣ ⬆️</div><p><strong>5 이상은 올림:</strong> 기준 자리 바로 아래가 5, 6, 7, 8, 9이면 윗자리 숫자에 1을 더합니다. 47 → 50</p></div>
+    <div><div class="emoji-line">0️⃣1️⃣2️⃣3️⃣4️⃣ ⬇️</div><p><strong>4 이하는 버림:</strong> 기준 자리 바로 아래가 0, 1, 2, 3, 4이면 그대로 버립니다. 43 → 40</p></div>
+  </div>
+  <div class="emoji-line">⚠️</div>
+  <p class="key">"어느 자리에서" 반올림하는지를 먼저 확인하십시오. 자리를 틀리면 답이 완전히 달라집니다. 547을 십의 자리에서 반올림하면 550이지만, 백의 자리에서 반올림하면 500입니다.</p>
+  <p>헷갈리기 쉬운 점 하나 더. <strong>반올림할 때 보는 것은 "기준 자리 바로 아래" 하나</strong>입니다. 십의 자리에서 반올림하면 일의 자리만 봅니다. 백의 자리에서 반올림하면 십의 자리만 봅니다.</p>
+</section>
+<section class="card">
+  <h2>4. 문제에서 만나는 10가지 모습</h2>
+  <table>
+    <tr><th>문제 예문</th><th>이 말의 실제 의미</th><th>아이에게</th></tr>
+    <tr><td>1. 47을 십의 자리에서 반올림하세요.</td><td>일의 자리 7이 5 이상이므로 올림 — 50</td><td>일의 자리가 5 이상이야, 4 이하야?</td></tr>
+    <tr><td>2. 43을 십의 자리에서 반올림하세요.</td><td>일의 자리 3이 4 이하이므로 버림 — 40</td><td>3은 올리는 수야, 버리는 수야?</td></tr>
+    <tr><td>3. 45를 십의 자리에서 반올림하세요.</td><td>일의 자리 5는 올림 — 50</td><td>5는 올리는 쪽이야?</td></tr>
+    <tr><td>4. 547을 백의 자리에서 반올림하세요.</td><td>십의 자리 4가 4 이하이므로 버림 — 500</td><td>어느 자리를 봐야 해?</td></tr>
+    <tr><td>5. 547을 십의 자리에서 반올림하세요.</td><td>일의 자리 7이 5 이상이므로 올림 — 550</td><td>4번 문제랑 뭐가 달라?</td></tr>
+    <tr><td>6. 86을 십의 자리에서 반올림하세요.</td><td>일의 자리 6이 5 이상이므로 올림 — 90</td><td>80이랑 90 중에 뭐가 더 가까워?</td></tr>
+    <tr><td>7. 82를 십의 자리에서 반올림하세요.</td><td>일의 자리 2가 4 이하이므로 버림 — 80</td><td>2는 버리는 수지?</td></tr>
+    <tr><td>8. 1,480을 백의 자리에서 반올림하세요.</td><td>십의 자리 8이 5 이상이므로 올림 — 1,500</td><td>백의 자리 아래는 어디야?</td></tr>
+    <tr><td>9. 1,420을 백의 자리에서 반올림하세요.</td><td>십의 자리 2가 4 이하이므로 버림 — 1,400</td><td>2는 올리는 수야?</td></tr>
+    <tr><td>10. 반올림한 값이 60이 되는 수는?</td><td>55부터 64까지 — 경계가 5</td><td>54를 반올림하면 얼마야? 55는?</td></tr>
+  </table>
+  <p class="key">열 가지 모두 "어느 자리에서, 그 아래 자리가 5 이상인지 4 이하인지"를 묻고 있습니다.</p>
+</section>
+<section class="card">
+  <h2>5. 비슷한 표현과 구별하기</h2>
+  <table>
+    <tr><th>표현</th><th>핵심 차이</th><th>쉬운 예시</th></tr>
+    <tr><td>반올림</td><td>5 이상은 올리고 4 이하는 버림 — 규칙</td><td>47 → 50, 43 → 40</td></tr>
+    <tr><td>올림</td><td>무조건 올리기</td><td>41 → 50</td></tr>
+    <tr><td>버림(내림)</td><td>무조건 버리기</td><td>49 → 40</td></tr>
+    <tr><td>어림셈</td><td>대충 짐작하기 (55강)</td><td>38+51은 90쯤</td></tr>
+  </table>
+  <p>네 표현을 한 문장으로 연결하면 이렇습니다. <strong>"47을 반올림하면 50이 되지만, 올림을 하면 41도 50이 되고, 버림을 하면 49도 40이 되며, 어림셈은 그냥 50쯤이라고 짐작하는 거예요."</strong></p>
+</section>
+<section class="card">
+  <h2>6. 아빠를 위한 지도 방법</h2>
+  <p>"어느 자리에서"를 먼저 묻는 습관을 들이십시오. 자리를 확인하지 않고 반올림하는 것이 가장 흔한 실수입니다.</p>
+  <div class="dialog">
+    <p>아빠: "서윤아, 547을 백의 자리에서 반올림하면?"</p>
+    <p>아이: "500?"</p>
+    <p>아빠: "맞아! 백의 자리 아래, 즉 십의 자리가 4니까 버리는 거야. 그럼 십의 자리에서 반올림하면?"</p>
+    <p>아이: "550!"</p>
+    <p>아빠: "정확해! '어느 자리에서'를 먼저 보는 게 반올림의 첫걸음이야."</p>
+  </div>
+  <p>같은 수(547)를 다른 자리에서 반올림하게 하십시오. <strong>자리가 바뀌면 답이 달라진다</strong>는 것을 한 번의 경험으로 알게 됩니다.</p>
+</section>
+<section class="card">
+  <h2>7. 오늘의 실전 과외 문제</h2>
+  <div class="quiz-q" data-answer="1">
+    <p class="q-text"><strong>1.</strong> 47을 십의 자리에서 반올림하면 얼마일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-56-1" value="0"> 40</label>
+    <label class="q-opt"><input type="radio" name="q2-56-1" value="1"> 50</label>
+    <label class="q-opt"><input type="radio" name="q2-56-1" value="2"> 47</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="0">
+    <p class="q-text"><strong>2.</strong> 547을 백의 자리에서 반올림하면 얼마일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-56-2" value="0"> 500</label>
+    <label class="q-opt"><input type="radio" name="q2-56-2" value="1"> 550</label>
+    <label class="q-opt"><input type="radio" name="q2-56-2" value="2"> 600</label>
+    <p class="q-feedback"></p>
+  </div>
+  <div class="quiz-q" data-answer="1">
+    <p class="q-text"><strong>3.</strong> 반올림할 때 올려야 하는 경우는 언제일까요?</p>
+    <label class="q-opt"><input type="radio" name="q2-56-3" value="0"> 기준 자리 아래가 4 이하일 때</label>
+    <label class="q-opt"><input type="radio" name="q2-56-3" value="1"> 기준 자리 아래가 5 이상일 때</label>
+    <label class="q-opt"><input type="radio" name="q2-56-3" value="2"> 언제나</label>
+    <p class="q-feedback"></p>
+  </div>
+</section>
+<section class="card highlight">
+  <h2>🎯 오늘 아빠가 반드시 기억할 것</h2>
+  <p>"어느 자리에서 반올림하는지 먼저 확인할 수 있다." → "그 아래 자리가 5 이상인지 4 이하인지 판단한다." → "같은 수도 자리에 따라 답이 달라진다는 것을 안다."</p>
+  <p>이 마지막 단계까지 도달하면 단어를 암기한 것이 아니라 개념을 이해한 것입니다.</p>
+  <p><strong>오늘의 아빠 숙제:</strong> 547을 놓고 "백의 자리에서는? 십의 자리에서는?"를 물어보십시오. 아이가 "어느 자리에서?"를 먼저 확인하는 순간 수업은 성공입니다.</p>
+  <p><strong>다음 차시 예고:</strong> 다음 수업은 <strong>57강 '이상·이하(以上·以下)'</strong>입니다. "가까운 수로 바꾸기"에서 한 걸음 더 나아가 "그 숫자를 포함하느냐 마느냐"를 배웁니다.</p>
+</section>
+
+<nav class="pager"><a href="../index2.html">🏠 대문으로</a><a href="lesson-55.html">← 55번</a><a href="lesson-57.html">57번 →</a></nav>
+<footer class="foot">서윤 아빠의 과외 교실 · 문제 풀이 지시어 66강</footer>
+</main>
+<script src="../quiz.js"></script>
+</body>
+</html>
