@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f5ef">
   <meta name="description" content="7세를 위한 오프라인 칸쵸 수학: 무작위 덧셈·뺄셈, 직접 누르는 애니메이션과 정답 효과">
-  <title>칸쵸 수학 탐험대 V3 | 랜덤 문제와 수동 애니메이션</title>
+  <title>칸쵸 수학 탐험대 V4 | 모바일 화면 개선</title>
   <style>
     :root{
       --ink:#20343b;--muted:#64747a;--line:#dce5e6;--bg:#f7f5ef;--paper:#fffefa;
@@ -85,6 +85,42 @@
 .btn.sparkle-btn:hover:not(:disabled){background:#ffebc5}
 .play-controls [data-action="next"]{border-color:#69b6aa;background:#e5f6ef;color:#126b66;box-shadow:0 2px 0 #bbdcd1}
 .play-controls [data-action="next"]:hover:not(:disabled){background:#d9f2e8}
+
+/* V4: portrait-phone layout guard. The previous .gallery.large two-column
+   declaration appeared AFTER the mobile media query and overrode it. */
+@media (max-width:650px){
+  .gallery.large{grid-template-columns:minmax(0,1fr);gap:14px}
+  .gallery.large .number-card{
+    width:100%;min-width:0;padding:16px 12px;overflow:hidden;
+    border-radius:17px;gap:11px;
+  }
+  .gallery.large .patterns{
+    box-sizing:border-box;width:100%;min-width:0;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,225px),1fr));
+    gap:12px 10px;justify-items:center;align-items:start;
+  }
+  .gallery.large .pattern-item{min-width:0;max-width:100%;width:100%;display:flex;align-items:center;justify-content:center}
+  .gallery.large .tenframe{
+    --slot-size:clamp(30px,9.5vw,44px);
+    max-width:100%;gap:clamp(3px,1vw,6px);padding:8px;
+  }
+  .gallery.large .split-caption{font-size:.85rem}
+  /* In overview mode, two readable cards fit better than five microscopic ones. */
+  .gallery.compact{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .gallery.compact .number-card{padding:10px 5px;gap:7px}
+  .gallery.compact .number-label strong{font-size:1.24rem}
+  .gallery.compact .number-label small{display:inline;font-size:.59rem}
+  .gallery.compact .tenframe{--slot-size:clamp(14px,4.2vw,21px);gap:2px;padding:4px;border-radius:8px}
+  .gallery.compact .split-caption{font-size:.66rem}
+  .gallery.compact .patterns{gap:7px;min-width:0;width:100%}
+  .gallery.compact .pattern-item{max-width:100%;min-width:0}
+  .gallery.compact .cookie:before{font-size:6px;display:block}
+}
+@media (max-width:345px){
+  .gallery.large .tenframe{--slot-size:clamp(28px,9vw,32px)}
+  .gallery.compact .tenframe{--slot-size:clamp(12px,4vw,14px);gap:1px;padding:3px}
+  .gallery.compact .number-card{padding:8px 3px}
+}
 </style>
 </head>
 <body>
