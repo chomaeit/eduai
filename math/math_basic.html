@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="7세를 위한 오프라인 칸쵸 수학: 무작위 덧셈·뺄셈, 직접 누르는 애니메이션과 정답 효과">
+  <title>칸쵸 수학 탐험대 V3 | 랜덤 문제와 수동 애니메이션</title>
+  <style>
+    :root{
+      --ink:#20343b;--muted:#64747a;--line:#dce5e6;--bg:#f7f5ef;--paper:#fffefa;
+      --teal:#0e777b;--teal-dark:#115c62;--teal-soft:#dff3ed;--green:#34865f;
+      --orange:#ec964c;--orange-soft:#fff0db;--pink:#f7d7e4;--purple:#8063b5;
+      --shadow:0 14px 40px rgba(28,52,54,.075);--slot-size:49px;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family: "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.5}button,select,input{font:inherit}button{cursor:pointer}button:disabled,select:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #83a8ff;outline-offset:3px}.hidden{display:none!important}
+    .wrap{max-width:1240px;margin:auto;padding:20px 22px 60px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:19px}.brand{display:flex;align-items:center;gap:11px;font-size:1.07rem;font-weight:900;letter-spacing:-.045em}.logo{width:43px;height:43px;display:grid;place-items:center;background:#e8f5ea;border:1px solid #c9e8d9;border-radius:15px;font-size:23px}.top-pill{font-size:.78rem;font-weight:800;color:#597376;background:#fff;border:1px solid var(--line);border-radius:30px;padding:8px 13px}.hero{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:20px;min-height:214px;background:#123f45;color:#fff;border-radius:25px;padding:32px 39px}.hero:before{content:"";position:absolute;inset:-120px -90px auto auto;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle,#2a7b75 0,rgba(42,123,117,.06) 68%)}.hero:after{content:"";position:absolute;width:250px;height:250px;left:35%;bottom:-180px;border:2px dashed rgba(255,255,255,.13);border-radius:50%}.hero-copy{position:relative;z-index:1}.eyebrow{font-size:.78rem;font-weight:900;letter-spacing:.13em;color:#bce9d7}.hero h1{font-size:clamp(1.7rem,3.5vw,2.75rem);letter-spacing:-.06em;line-height:1.15;margin:9px 0}.hero p{font-size:.92rem;line-height:1.65;color:#d4e8e6;margin:0}.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.hero-tags span{padding:6px 10px;font-size:.74rem;font-weight:800;border:1px solid #ffffff2b;background:#ffffff13;border-radius:20px}.hero-art{position:relative;z-index:1;flex:0 0 245px;display:grid;place-items:center}.hero-art .tenframe{transform:rotate(-8deg);box-shadow:12px 12px 0 #ffffff13;--slot-size:36px;gap:5px;padding:11px}.hero-spark{position:absolute;font-size:32px;right:-3px;top:-21px;transform:rotate(15deg)}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}.panel{background:var(--paper);border:1px solid var(--line);border-radius:23px;box-shadow:var(--shadow)}.sidebar{position:sticky;top:18px;padding:20px}.sect-label{font-size:.74rem;font-weight:900;letter-spacing:.09em;color:var(--muted);margin:0 0 11px}.navlist{display:grid;gap:8px}.navbtn{width:100%;display:flex;align-items:center;text-align:left;gap:11px;padding:12px 10px;background:transparent;border:1.5px solid transparent;border-radius:14px;color:var(--ink);transition:background .2s,border-color .2s}.navbtn:hover{background:#eff5f1}.navbtn.active{background:#e3f5ed;border-color:#83c7b9}.nav-number{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:#edf0ee;border:1px solid #e4e9e7;font-size:1.12rem;flex:none}.navbtn.active .nav-number{background:var(--teal);border-color:var(--teal);color:white}.navbtn strong{display:block;font-size:.87rem}.navbtn small{display:block;color:var(--muted);font-size:.71rem;margin-top:1px}.aside-divider{height:1px;background:var(--line);margin:19px 0}.parent-mini{background:#fbf2df;border:1px solid #f0e1bd;border-radius:18px;padding:15px}.parent-mini strong{font-size:.88rem}.parent-mini p{font-size:.79rem;color:#685f50;margin:5px 0 0;line-height:1.65}
+    .maincol{display:grid;gap:17px;min-width:0}.module-header{padding:24px 27px}.head-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.tag{font-size:.75rem;font-weight:900;background:var(--teal-soft);color:#14695f;padding:5px 11px;border-radius:30px}.time{font-size:.78rem;color:var(--muted);font-weight:800}.module-header h2{margin:9px 0 5px;font-size:clamp(1.3rem,2.7vw,1.7rem);letter-spacing:-.05em}.module-header p{font-size:.88rem;margin:0;color:var(--muted)}.mission{display:flex;align-items:start;gap:10px;background:#f1f7f4;border-radius:12px;padding:12px 13px;margin-top:15px;font-size:.83rem}.mission strong{flex:none;color:var(--teal)}.workspace{padding:22px 24px 25px}.workspace-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}.workspace-top h3{font-size:1.14rem;letter-spacing:-.04em;margin:0}.workspace-top span{font-size:.75rem;color:var(--muted)}.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:15px;background:#f6f8f5;border-radius:15px;border:1px solid #e9edeb;margin-bottom:15px}.controls label{display:flex;gap:7px;align-items:center;font-size:.81rem;font-weight:800}.controls select{border:1.5px solid #cbdcd9;border-radius:10px;background:white;color:var(--ink);padding:8px 10px;font-weight:850;min-width:61px}.choices-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.choice-chip{border:1.5px solid #d8e5e1;background:#fff;padding:8px 11px;color:var(--ink);font-size:.82rem;font-weight:850;border-radius:999px}.choice-chip:hover{border-color:#55b6a7}.choice-chip.active{border-color:#23978c;background:#e5f7ef;color:#0e686a}.control-divider{height:22px;width:1px;background:#dce5df;margin:0 3px}.radio-option{display:inline-flex;gap:7px;align-items:center;padding:8px 12px;border:1.5px solid #dbe5e1;border-radius:11px;background:#fff;cursor:pointer;font-size:.83rem;font-weight:800}.radio-option:has(input:checked){border-color:#43a697;background:#e2f6ee}.radio-option input{accent-color:var(--teal);width:16px;height:16px;margin:0}
+    .stage{position:relative;border-radius:20px;border:1px solid #e2ece8;background:linear-gradient(180deg,#fbfdfb 0%,#f1f8f4 100%);padding:22px 17px 19px;text-align:center;min-height:385px;overflow:hidden}.stage-title{font-weight:900;letter-spacing:-.04em;font-size:clamp(1.45rem,3.5vw,2.05rem);margin:0}.stage-sub{color:var(--muted);font-size:.83rem;margin:6px auto 15px;line-height:1.6;max-width:650px}.board-pair{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.8vw,23px);flex-wrap:wrap;margin:13px auto 12px}.board-unit{min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px}.board-label{font-size:.8rem;font-weight:900;color:#4e6971}.board-label b{font-size:1.15rem;color:var(--ink)}.board-unit.giver .tenframe{border-color:#f0bfd0;background:#fffcfb}.board-unit.receiver .tenframe{border-color:#8bc9bd;background:#f7fffb}.operator{font-size:2rem;line-height:1;font-weight:900;color:#d2973e;margin-top:21px}.tenframe{display:grid;grid-template-columns:repeat(5,var(--slot-size));grid-template-rows:repeat(2,var(--slot-size));gap:7px;width:max-content;background:#fff;border:2px solid #cbdcd8;border-radius:19px;padding:11px;box-shadow:0 6px 16px #24493b09}.slot{position:relative;width:var(--slot-size);height:var(--slot-size);border-radius:50%;background:radial-gradient(circle at 48% 40%,#e9efeb 0,#dce6e1 58%,#d1ddd8 100%);box-shadow:inset 0 3px 7px #6c968833,0 1px 1px #ffffffc7;border:2px solid #cbdcd6;display:grid;place-items:center;flex:none}.slot.filled{background:radial-gradient(circle,#f5f4e8 0,#ebf1e7 100%);border-color:#cad8ca}.cookie{position:relative;display:block;width:89%;height:89%;border-radius:50% 47% 51% 49%;border:2px solid #c78335;background:radial-gradient(circle at 31% 21%,#ffefbc 0,#f2c983 35%,#e3a456 69%,#ca7c39 95%);box-shadow:inset 2px 3px 2px #fff0c5a8,inset -3px -3px 3px #b96b39a1,0 2px 3px #9d613c42;transform:rotate(-6deg);pointer-events:none}.cookie:before{content:"♥";font-size:clamp(9px,1.65vw,17px);font-weight:900;line-height:1;position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) rotate(11deg);color:#8f4c30;text-shadow:0 1px 0 #f6ce95}.cookie:after{content:"";position:absolute;left:19%;top:14%;width:18%;height:12%;background:#fff3be8c;border-radius:50%;transform:rotate(-27deg)}.cookie.donor{filter:drop-shadow(0 0 3px #ef7f9e);outline:3px solid #ef9db6;outline-offset:1px}.slot.spark{animation:slotGlow .65s ease}.flying-cookie{position:fixed!important;pointer-events:none!important;z-index:9999!important;margin:0!important}.tray{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin:12px auto 0;color:#986c4f;font-size:.82rem;font-weight:850}.tray-target{display:grid;place-items:center;min-width:76px;height:39px;border:2px dashed #e4ae85;border-radius:18px;background:#fff5e8;font-size:.82rem}.story{display:inline-flex;align-items:center;justify-content:center;gap:7px;max-width:95%;min-height:40px;border-radius:13px;background:white;border:1px solid #dcebe4;padding:9px 15px;color:#356e66;font-weight:850;font-size:clamp(.82rem,1.8vw,1rem);margin-top:6px;line-height:1.55}.story .pill{background:#fff2d8;color:#99611d;border-radius:9px;padding:2px 7px;white-space:nowrap}.stage-footer{min-height:23px;margin-top:9px;color:#637b78;font-size:.78rem}.play-controls{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin-top:17px}.btn{border:none;background:var(--teal);color:#fff;min-height:47px;padding:12px 21px;border-radius:13px;font-weight:900;font-size:.91rem;box-shadow:0 3px 0 #0b595e}.btn:hover:not(:disabled){background:#0b646b;transform:translateY(-1px)}.btn.secondary{background:#fff;color:var(--teal);border:1.5px solid #a9cfc9;box-shadow:none}.btn.secondary:hover:not(:disabled){background:#eef8f3}.btn.ghost{background:transparent;color:#557a74;border:1px solid #cbddd7;box-shadow:none}.speedline{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:12px;color:#70807e;font-size:.77rem}.speedline select{font-size:.78rem;border:1px solid #d2dfdb;border-radius:7px;padding:3px 6px;color:#506660;background:white}.result-splash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;z-index:8;pointer-events:none;background:radial-gradient(circle,#fffdeec9 0,#f5fff0a1 47%,#f9fffb00 76%);opacity:0;visibility:hidden}.result-splash .spark{font-size:clamp(2rem,7vw,3.3rem)}.result-splash strong{font-size:clamp(4.5rem,14vw,8.2rem);line-height:1.05;letter-spacing:-.08em;color:#f08b38;text-shadow:0 6px 0 #fff,0 10px 25px #ce8a3999}.result-splash small{font-size:clamp(1rem,2.5vw,1.45rem);color:#216e66;font-weight:1000}.result-splash.on{visibility:visible;animation:boing 2.5s forwards}.finished-inline{color:#257f64;font-weight:1000;font-size:1rem}.recall-wrap{border:1px dashed #b4d9cd;background:#f3faf5;padding:14px;margin-top:16px;border-radius:16px;display:none}.recall-wrap.visible{display:block}.recall-head{font-weight:900;font-size:.88rem;margin-bottom:8px}.recall-question{font-size:1.4rem;font-weight:1000;margin:5px 0}.recall-answer{font-size:1.7rem;color:#248560;font-weight:1000}.recall-hidden .board-pair,.recall-hidden .tray{visibility:hidden}.recall-hidden .stage-title{opacity:.45}
+    .gallery{display:grid;gap:10px}.gallery.compact{grid-template-columns:repeat(5,minmax(0,1fr))}.number-card{background:#fff;border:1.5px solid #e2eae7;border-radius:15px;padding:9px 7px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;transition:box-shadow .2s,transform .2s}.number-card:hover{border-color:#99cec2;box-shadow:0 4px 16px #0e777b11}.number-card .number-label{display:flex;align-items:baseline;gap:5px}.number-label strong{font-size:1.34rem;color:#17776e;line-height:1.2}.number-label small{font-size:.62rem;color:#799089;font-weight:750}.patterns{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;flex:1}.gallery.compact .tenframe{--slot-size:12px;gap:2px;padding:3px;border-width:1px;border-radius:6px;box-shadow:none}.gallery.compact .slot{border-width:1px;box-shadow:inset 0 1px 2px #78948c42}.gallery.compact .cookie{border-width:1px}.gallery.compact .cookie:before{font-size:5px}.gallery.compact .cookie:after{display:none}.gallery.large{grid-template-columns:repeat(2,minmax(0,1fr))}.gallery.large .number-card{padding:18px 9px;gap:13px}.gallery.large .number-label strong{font-size:2rem}.gallery.large .number-label small{font-size:.82rem}.gallery.large .patterns{gap:13px}.gallery.large .tenframe{--slot-size:38px;gap:6px;padding:9px}.gallery.large .cookie:before{font-size:14px}.gallery-guide{display:flex;justify-content:center;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:13px;font-size:.81rem;color:#5e7471}.gallery-guide b{color:#19746e}.view-tip{color:var(--muted);text-align:center;font-size:.78rem;margin:12px 2px 0}.counter-number{display:inline-flex;align-items:center;justify-content:center;min-width:27px;height:27px;background:#e3f5ed;border-radius:8px;font-size:.87rem;color:#176e64;font-weight:950}
+    .reflection{padding:20px 24px}.reflection h3{margin:0 0 12px;font-size:1rem;letter-spacing:-.03em}.reflection-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.quote{padding:13px;background:#e7f5ef;border-radius:12px;font-size:.84rem;font-weight:800;color:#2e7268}.tip{padding:13px;background:#fff5e8;border-radius:12px;color:#7b6245;font-size:.81rem;line-height:1.65}.tip b{display:block;margin-bottom:3px}.footnote{font-size:.76rem;color:#72817e;text-align:center;margin:23px 0 0;line-height:1.7}.notice{margin-top:12px;padding:11px 14px;background:#fff9e8;border:1px solid #f2e5be;border-radius:12px;font-size:.8rem;color:#886734}.notice strong{color:#79511d}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @keyframes boing{0%{opacity:0;transform:scale(.13) translateY(50px)}13%{opacity:1;transform:scale(.85) translateY(-12px)}24%{opacity:1;transform:scale(1.27) translateY(4px)}37%{opacity:1;transform:scale(.94) translateY(-20px)}52%{opacity:1;transform:scale(1.13) translateY(3px)}67%{opacity:1;transform:scale(1) translateY(-12px)}79%{opacity:1;transform:scale(1.08) translateY(-20px)}100%{opacity:0;transform:scale(1.38) translateY(-55px)}}@keyframes slotGlow{0%,100%{box-shadow:inset 0 3px 7px #6c968833}50%{box-shadow:0 0 0 6px #75cba044,0 0 18px #56c09080}}@keyframes giveHint{50%{transform:translateY(-4px)}}
+    @media(max-width:1120px){.gallery.compact{grid-template-columns:repeat(5,minmax(0,1fr))}.board-pair{gap:9px}.stage{--slot-size:42px}.hero-art{flex-basis:215px}}
+    @media(max-width:920px){.layout{grid-template-columns:1fr}.sidebar{position:static}.navlist{grid-template-columns:repeat(4,1fr)}.navbtn{flex-direction:column;align-items:center;text-align:center;padding:11px 5px;gap:5px}.navbtn small{font-size:.66rem}.aside-divider,.parent-mini,.sidebar .sect-label{display:none}.sidebar{padding:11px}.hero-art{flex:0 0 190px}.gallery.compact{grid-template-columns:repeat(5,minmax(0,1fr))}.stage{--slot-size:45px}}
+    @media(max-width:650px){.wrap{padding:12px 10px 30px}.topbar{margin-bottom:10px}.top-pill{display:none}.hero{padding:24px 22px;min-height:175px}.hero-art{display:none}.hero h1{font-size:1.74rem}.hero p{font-size:.83rem}.hero-tags{margin-top:13px}.layout{margin-top:11px;gap:12px}.maincol{gap:12px}.navbtn strong{font-size:.75rem}.navbtn small{display:none}.nav-number{width:35px;height:35px}.sidebar{border-radius:16px}.module-header{padding:19px 18px}.workspace{padding:17px 12px}.controls{padding:10px;gap:7px}.controls label{font-size:.77rem}.workspace-top h3{font-size:1rem}.workspace-top span{font-size:.69rem}.stage{padding:18px 7px;min-height:355px;--slot-size:29px}.tenframe{gap:4px;padding:6px;border-radius:12px}.slot{border-width:1px}.cookie{border-width:1px}.cookie:before{font-size:11px}.cookie:after{display:none}.board-pair{gap:4px;flex-wrap:nowrap}.board-label{font-size:.68rem}.board-label b{font-size:.95rem}.operator{font-size:1.2rem}.story{font-size:.77rem;padding:9px 8px}.gallery.compact{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.gallery.compact .number-card{padding:5px 2px;gap:4px;border-radius:8px}.gallery.compact .number-label strong{font-size:1.05rem}.gallery.compact .number-label small{display:none}.gallery.compact .tenframe{--slot-size:9px;gap:1px;padding:2px;border-radius:4px}.gallery.compact .cookie:before{display:none}.gallery.compact .patterns{gap:4px}.gallery.large{grid-template-columns:1fr}.gallery.large .tenframe{--slot-size:38px}.reflection{padding:18px}.reflection-grid{grid-template-columns:1fr}.choice-chip{padding:7px 9px;font-size:.75rem}.control-divider{display:none}.btn{font-size:.85rem;padding:10px 13px}.radio-option{padding:7px 9px;font-size:.77rem}}
+    @media(max-width:395px){.stage{--slot-size:25px}.tenframe{gap:3px;padding:5px}.gallery.compact .tenframe{--slot-size:8px}.gallery.compact{gap:4px}.gallery.large .tenframe{--slot-size:33px}.navbtn strong{font-size:.7rem}.stage-sub{font-size:.76rem}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.number-card,.btn{transition:none}}
+    @media print{.sidebar,.hero,.topbar,.controls,.play-controls,.speedline,.recall-wrap{display:none!important}.layout{display:block;margin:0}.wrap{padding:0}.panel{box-shadow:none}.gallery{grid-template-columns:repeat(5,1fr)!important}.number-card{break-inside:avoid}.reflection{break-inside:avoid}.stage{background:white}}
+
+/* v2: exhaustive number patterns, problem banks, alternate subtraction, dismissible delayed splash */
+.pattern-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.split-caption{font-size:.68rem;font-weight:900;color:#718780;line-height:1.25}
+.gallery.compact .split-caption{font-size:.55rem}
+.gallery.compact .patterns{gap:5px}
+.gallery.compact .number-card{justify-content:flex-start}
+.gallery.large .pattern-item{gap:5px}
+.gallery.large .split-caption{font-size:.83rem}
+.gallery.large{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gallery.large .patterns{flex-flow:row wrap;justify-content:center;align-items:flex-start}
+.gallery.large .number-card{min-height:200px}
+.problem-bank{margin-top:18px;padding:17px;background:#f7fbf7;border:1px solid #d9e9df;border-radius:18px;text-align:left}
+.problem-bank-header{display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap;margin-bottom:10px}
+.problem-bank-header h4{font-size:1rem;letter-spacing:-.035em;margin:0}
+.problem-bank-header p{font-size:.77rem;color:#637b74;margin:3px 0 0}
+.problem-count{font-size:.72rem;border-radius:30px;background:#e1f4e9;color:#16665f;padding:6px 10px;font-weight:850;white-space:nowrap}
+.bank-list{display:grid;gap:12px;max-height:360px;overflow-y:auto;overscroll-behavior:contain;padding:2px 6px 6px 0}
+.bank-list::-webkit-scrollbar{width:9px}.bank-list::-webkit-scrollbar-thumb{background:#c6dfd2;border-radius:20px}
+.bank-section{border-top:1px solid #e0eae5;padding-top:8px}
+.bank-section:first-child{border-top:0;padding-top:0}
+.bank-section-label{font-size:.76rem;color:#436d63;font-weight:900;margin-bottom:7px}
+.bank-chips{display:flex;flex-wrap:wrap;gap:6px}
+.bank-chip{min-width:68px;border-radius:11px;background:#fff;border:1.5px solid #cbded6;padding:8px 10px;font-size:.83rem;font-weight:850;color:#375d59;box-shadow:0 2px 0 #e3ece6}
+.bank-chip:hover{border-color:#34a397;background:#f2fcf8}
+.bank-chip.active{background:#0e777b;color:white;border-color:#0e777b;box-shadow:0 2px 0 #0b5359}
+.bank-chip:focus-visible{outline:3px solid #83a8ff;outline-offset:2px}
+.bank-chip.number-select{min-width:52px;display:grid;place-items:center;gap:0;padding:7px 10px;font-size:1.14rem}
+.bank-chip.number-select small{font-size:.67rem;opacity:.8}
+.bank-empty{padding:14px;color:#64747a;font-size:.82rem}
+.method-choices{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.method-choice{border:1.5px solid #d4dedb;background:white;border-radius:12px;padding:9px 13px;color:#2b5556;font-size:.8rem;font-weight:900}
+.method-choice.active{border-color:#248e82;background:#e0f5ed;color:#11655e}
+.method-explanation{margin:0;color:#547068;font-size:.78rem;line-height:1.65}
+.result-splash.on{pointer-events:auto!important;cursor:pointer;user-select:none;animation:none!important;opacity:1!important;visibility:visible!important;transform:none!important}
+.result-splash .splash-inner{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;pointer-events:none}
+.result-splash.on .splash-inner{animation:boing 2.5s forwards}
+.result-splash:focus-visible{outline:3px solid #83a8ff;outline-offset:-8px}
+.result-splash .tap-dismiss{font-size:.83rem;color:#386e64;font-weight:850;background:#ffffffdd;border-radius:20px;padding:3px 12px}
+.btn.secondary{background:#e4f1ed;color:#17635f;box-shadow:0 3px 0 #c3dfd5}
+.stage{overflow:hidden}
+@media(max-width:650px){
+ .stage{--slot-size:clamp(19px,5.85vw,29px)}
+ .bank-list{max-height:295px}
+ .bank-chip{min-width:62px;padding:8px;font-size:.78rem}
+ .problem-bank{padding:12px}
+ .gallery.large .number-card{padding:14px 4px}
+ .gallery.large .patterns{gap:9px 7px}
+ .gallery.large .tenframe{--slot-size:clamp(30px,8vw,38px)}
+ .gallery.compact .split-caption{font-size:.5rem}
+}
+@media(max-width:395px){.stage{--slot-size:clamp(18px,5.7vw,23px)}.gallery.large .tenframe{--slot-size:31px}}
+@media print{.problem-bank{display:none!important}}
+
+  .btn.sparkle-btn{background:#fff0d5;color:#965011;border:1.5px solid #e5bd7d;box-shadow:0 3px 0 #e8cda6}
+.btn.sparkle-btn:hover:not(:disabled){background:#ffebc5}
+.play-controls [data-action="next"]{border-color:#69b6aa;background:#e5f6ef;color:#126b66;box-shadow:0 2px 0 #bbdcd1}
+.play-controls [data-action="next"]:hover:not(:disabled){background:#d9f2e8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand"><div class="logo" aria-hidden="true">🍪</div><span>칸쵸 수학 탐험대</span></div>
+    <span class="top-pill">7세 숫자 감각 · 가르기·모으기 · 오프라인</span>
+  </header>
+  <section class="hero" aria-label="학습 프로그램 소개">
+    <div class="hero-copy">
+      <div class="eyebrow">MATH PLAY LAB · 4 ACTIVITIES</div>
+      <h1>칸쵸가 움직이면,<br>숫자가 보인다! ✨</h1>
+      <p>보고, 옮기고, 없애면서 수의 관계를 익힌 뒤<br>그림 없이 정답을 떠올리는 연습까지!</p>
+      <div class="hero-tags"><span>👀 수량 인식</span><span>🧩 10의 짝</span><span>🚀 가르기 덧셈</span><span>🍪 직접 빼기</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true"><div id="heroFrame"></div><div class="hero-spark">⭐</div></div>
+  </section>
+  <div class="layout">
+    <aside class="panel sidebar">
+      <p class="sect-label">숫자 탐험 4가지</p>
+      <nav class="navlist" id="modeNav" aria-label="학습 메뉴">
+        <button class="navbtn active" type="button" data-mode="numbers"><span class="nav-number">👀</span><span><strong>1~10 숫자 보기</strong><small>다양한 모양으로 수 알기</small></span></button>
+        <button class="navbtn" type="button" data-mode="complement"><span class="nav-number">🧩</span><span><strong>10의 보수</strong><small>10이 되는 숫자의 짝</small></span></button>
+        <button class="navbtn" type="button" data-mode="addition"><span class="nav-number">🚀</span><span><strong>가르기 더하기</strong><small>큰 수를 10으로 만들기</small></span></button>
+        <button class="navbtn" type="button" data-mode="subtraction"><span class="nav-number">🍪</span><span><strong>칸쵸 빼기</strong><small>빼는 모습을 눈으로 보기</small></span></button>
+      </nav>
+      <div class="aside-divider"></div>
+      <div class="parent-mini"><strong>💬 부모 코칭</strong><p>처음엔 공의 개수를 보고, 다음엔 숫자만 보여주세요. 답을 외우는 것도 중요한 학습입니다. 틀렸을 때는 정답을 함께 확인하고 쉽게 다시 시작해요.</p></div>
+    </aside>
+    <main class="maincol">
+      <section class="panel module-header">
+        <div class="head-top"><span class="tag" id="moduleTag">ACTIVITY 01 / 04</span><span class="time">하루 5~10분</span></div>
+        <h2 id="moduleTitle">1부터 10까지, 모양으로 알아봐요</h2>
+        <p id="moduleDesc">공의 배열이 달라도 개수가 같다는 것을 발견해요.</p>
+        <div class="mission"><strong>오늘의 목표</strong><span id="missionText">하나씩 세지 않고 5개 묶음과 배열을 보고 몇 개인지 떠올려요.</span></div>
+      </section>
+      <section class="panel workspace">
+        <div class="workspace-top"><h3 id="workspaceTitle">👀 숫자 눈뜨기</h3><span>그림 → 관계 → 암산</span></div>
+        <div class="controls" id="modeControls"></div>
+        <div id="stageArea"></div>
+        <div id="memoryArea"></div>
+        <div class="notice" id="accuracyNote"><strong>기억할 점:</strong> 그림은 수를 이해하기 위한 도구예요. 익숙해진 문제는 그림 없이 정답을 기억하는 연습으로 연결해 주세요.</div>
+      </section>
+      <section class="panel reflection">
+        <h3>💡 오늘의 부모 코칭</h3>
+        <div class="reflection-grid"><div class="quote" id="parentQuestion"></div><div class="tip" id="parentTip"></div></div>
+      </section>
+    </main>
+  </div>
+  <p class="footnote">모든 칸쵸 그림은 HTML·CSS로 직접 그려집니다. 인터넷 없이 실행되며 PC · 태블릿 · 휴대폰을 지원합니다.<br>문제를 선택하거나 다음 문제를 누르면 그림만 바뀝니다. ▶ 재생과 ✨ 띄용 정답은 직접 눌러주세요. 띄용 화면은 클릭하면 즉시 닫힙니다.</p>
+</div>
+<script>
+(()=>{
+'use strict';
+const MODES={
+ numbers:{tag:'ACTIVITY 01 / 04',title:'1부터 10까지, 가능한 모든 모양!',desc:'각 수를 윗줄과 아랫줄로 나누어 나타내는 모든 경우를 살펴봐요.',mission:'7개는 5+2, 4+3, 3+4, 2+5처럼 여러 배열로 나타낼 수 있어요.',workspace:'👀 숫자 눈뜨기',question:'"7개를 5+2 말고 다른 방법으로 놓을 수 있을까?"',tip:'<b>이렇게 도와주세요</b>윗줄과 아랫줄은 각 5칸입니다. 모양은 달라도 칸쵸 총수는 같아요. 먼저 크게 보고 익숙해지면 전체 보기로 비교해 보세요.'},
+ complement:{tag:'ACTIVITY 02 / 04',title:'10의 보수, 짝꿍을 찾아요',desc:'1~10 중 숫자를 누르면 그림이 나타나요. 재생 버튼을 누르면 움직여요. 10의 짝은 0이에요.',mission:'왼쪽 또는 오른쪽에서 작은 수가 큰 수 쪽으로 움직여 10칸을 완성해요.',workspace:'🧩 10의 짝 완성',question:'"7이 있는데, 10개를 만들려면 몇 개가 더 필요할까?"',tip:'<b>이렇게 도와주세요</b>1~10 버튼은 문제만 고릅니다. 아이가 수를 관찰한 다음 재생 버튼을 눌러주세요. 10+0처럼 처음부터 가득 찬 경우도 보여주세요.'},
+ addition:{tag:'ACTIVITY 03 / 04',title:'가르기로 10 만드는 덧셈',desc:'합이 10~20인 덧셈 64가지에서 무작위 문제를 받고, 원할 때 움직임을 확인해요.',mission:'예: 7+8에서 7을 5+2로 가르고 2가 8로 움직이면 10+5=15가 돼요.',workspace:'🚀 10 만들기 더하기',question:'"어느 상자가 10개에 더 가깝지? 몇 개만 옮기면 될까?"',tip:'<b>이렇게 도와주세요</b>큰 수를 먼저 10으로 만들기 위해 작은 수에서 필요한 만큼 가져옵니다. 이미 10개가 있는 경우에는 옮기지 않아도 돼요. 한 번 이해했다면 바로 답을 떠올려 보세요.'},
+ subtraction:{tag:'ACTIVITY 04 / 04',title:'칸쵸 빼기, 두 가지 계산법',desc:'무작위 뺄셈 문제를 그림으로 보고, 재생 버튼으로 두 가지 풀이를 비교해요.',mission:'방법 ① 전체에서 차례대로 제거 ② 10개 묶음에서 먼저 제거하고 나머지와 합치기.',workspace:'🍪 두 가지로 빼기',question:'"13−8은 13개에서 8개를 치워도, (10−8)+3으로 풀어도 왜 5일까?"',tip:'<b>이렇게 도와주세요</b>① 13에서 직접 8개를 제거하고 ② (10−8)+3을 비교해보세요. 처음 수가 10보다 작으면 두 방법 모두 같은 상자에서 빼는 방식으로 표현됩니다.'}
+};
+const $=id=>document.getElementById(id);
+const range=n=>Array.from({length:n},(_,i)=>i);
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const ADD_PROBLEMS=[];
+for(let a=1;a<=10;a++)for(let b=1;b<=10;b++)if(a+b>=10&&a+b<=20)ADD_PROBLEMS.push([a,b]);
+const SUB_PROBLEMS=[];
+for(let a=1;a<=20;a++)for(let b=1;b<=10;b++)if(a-b>=0&&a-b<=10)SUB_PROBLEMS.push([a,b]);
+// Pick a problem uniformly, except for the currently visible problem when alternatives exist.
+function nextRandomProblem(which){
+  const pool=which==='addition'?ADD_PROBLEMS:SUB_PROBLEMS;
+  const previous=which==='addition'?[addLeft,addRight]:[subtractTotal,subtractBy];
+  const matches=pool.filter(([a,b])=>a!==previous[0]||b!==previous[1]);
+  const options=matches.length?matches:pool;
+  const [a,b]=options[Math.floor(Math.random()*options.length)];
+  if(which==='addition'){addLeft=a;addRight=b;}
+  else{subtractTotal=a;subtractBy=b;}
+}
+let mode='numbers',galleryMode='compact',complement=3,addLeft=7,addRight=8,subtractTotal=13,subtractBy=8;
+let subtractionMethod='direct',speed='slow',runId=0,running=false,splashHideTimer=null;
+const token=()=>'<span class="cookie" aria-hidden="true"></span>';
+function patternsFor(n){
+  const patterns=[];
+  for(let top=Math.min(5,n);top>=Math.max(0,n-5);top--){
+    const bottom=n-top;
+    const indices=[...range(top),...range(bottom).map(i=>5+i)];
+    patterns.push({top,bottom,indices});
+  }
+  return patterns;
+}
+function frameHTML(count,opts={}){
+  const filled=new Set(opts.indices??range(count));
+  const cells=range(10).map(i=>`<div class="slot ${filled.has(i)?'filled':''}" data-index="${i}">${filled.has(i)?token():''}</div>`).join('');
+  const label=opts.label||`열 칸 중 ${count}칸에 칸쵸가 있어요`;
+  return `<div class="tenframe" ${opts.id?`id="${opts.id}"`:''} role="img" aria-label="${label}">${cells}</div>`;
+}
+function clearSplash(){
+  if(splashHideTimer!==null){clearTimeout(splashHideTimer);splashHideTimer=null;}
+  const el=$('resultSplash');if(el){el.classList.remove('on');el.setAttribute('aria-hidden','true');}
+}
+function invalidate(){
+  runId++;running=false;clearSplash();
+  document.querySelectorAll('.flying-cookie').forEach(el=>el.remove());
+}
+function actual(){
+  if(mode==='complement')return {a:complement,b:10-complement,answer:10,operator:'+'};
+  if(mode==='addition')return {a:addLeft,b:addRight,answer:addLeft+addRight,operator:'+'};
+  if(mode==='subtraction')return {a:subtractTotal,b:subtractBy,answer:subtractTotal-subtractBy,operator:'−'};
+  return null;
+}
+function render(){renderControls();renderStage();}
+function setMode(next){
+  if(!MODES[next])return;invalidate();mode=next;
+  if(mode==='addition'||mode==='subtraction')nextRandomProblem(mode);
+  document.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.mode===mode);b.setAttribute('aria-pressed',String(b.dataset.mode===mode));});
+  const m=MODES[mode];
+  $('moduleTag').textContent=m.tag;$('moduleTitle').textContent=m.title;$('moduleDesc').textContent=m.desc;
+  $('missionText').textContent=m.mission;$('workspaceTitle').textContent=m.workspace;
+  $('parentQuestion').textContent=m.question;$('parentTip').innerHTML=m.tip;
+  render();
+}
+function renderControls(){
+  let html='';
+  if(mode==='numbers'){
+    html=`<label class="radio-option"><input type="radio" name="viewMode" value="compact" ${galleryMode==='compact'?'checked':''}> 전체 한눈에</label><label class="radio-option"><input type="radio" name="viewMode" value="large" ${galleryMode==='large'?'checked':''}> 크게 스크롤</label><span class="method-explanation">각 줄 최대 5개 · 1~10 총 35가지 배치</span>`;
+  }else if(mode==='complement'){
+    html='<span class="method-explanation">아래의 1~10을 누르면 그림이 바뀝니다. ▶ 재생으로 공을 움직여 보세요. 10의 짝은 0!</span>';
+  }else if(mode==='addition'){
+    html=`<span class="method-explanation">1~10 사이 두 수의 합이 10~20인 <b>${ADD_PROBLEMS.length}가지</b> · 아래 문제를 선택하면 그림이 바뀌고, ▶ 재생을 눌러야 움직입니다.</span>`;
+  }else{
+    html=`<div class="method-choices" role="group" aria-label="뺄셈 계산 방식"><button type="button" class="method-choice ${subtractionMethod==='direct'?'active':''}" data-method="direct" aria-pressed="${subtractionMethod==='direct'}">① 전체에서 순서대로 빼기</button><button type="button" class="method-choice ${subtractionMethod==='ten'?'active':''}" data-method="ten" aria-pressed="${subtractionMethod==='ten'}">② 10에서 먼저 빼기</button></div><span class="method-explanation">방식을 바꿔도 자동 재생되지 않습니다. ▶ 재생을 눌러주세요.</span>`;
+  }
+  $('modeControls').innerHTML=html;
+}
+function groupBank(title,desc,groups,count){
+  return `<div class="problem-bank" aria-label="문제 선택"><div class="problem-bank-header"><div><h4>👇 ${title}</h4><p>${desc}</p></div><span class="problem-count">${count}가지</span></div><div class="bank-list">${groups}</div></div>`;
+}
+function bankHTML(){
+  if(mode==='complement'){
+    const chips=range(10).map(i=>{const n=i+1;return `<button type="button" class="bank-chip number-select ${n===complement?'active':''}" data-comp="${n}" aria-pressed="${n===complement}">${n}<small>+ ${10-n}</small></button>`;}).join('');
+    return groupBank('1~10 중 숫자 선택','숫자를 선택하면 문제와 그림만 바뀝니다.',`<div class="bank-section"><div class="bank-chips">${chips}</div></div>`,10);
+  }
+  if(mode==='addition'){
+    const groups=[];
+    for(let answer=10;answer<=20;answer++){
+      const pairs=ADD_PROBLEMS.filter(([a,b])=>a+b===answer);
+      const chips=pairs.map(([a,b])=>`<button type="button" class="bank-chip ${a===addLeft&&b===addRight?'active':''}" data-add="${a},${b}" aria-pressed="${a===addLeft&&b===addRight}">${a} + ${b}</button>`).join('');
+      groups.push(`<section class="bank-section"><div class="bank-section-label">결과 ${answer} · ${pairs.length}가지</div><div class="bank-chips">${chips}</div></section>`);
+    }
+    return groupBank('덧셈 문제 직접 선택','누르면 해당 문제가 표시됩니다. 움직임은 ▶ 재생으로 시작하세요.',groups.join(''),ADD_PROBLEMS.length);
+  }
+  if(mode==='subtraction'){
+    const groups=[];
+    for(let from=1;from<=20;from++){
+      const pairs=SUB_PROBLEMS.filter(([a])=>a===from);
+      const chips=pairs.map(([a,b])=>`<button type="button" class="bank-chip ${a===subtractTotal&&b===subtractBy?'active':''}" data-sub="${a},${b}" aria-pressed="${a===subtractTotal&&b===subtractBy}">${a} − ${b}</button>`).join('');
+      groups.push(`<section class="bank-section"><div class="bank-section-label">${from}에서 빼기 · ${pairs.length}가지</div><div class="bank-chips">${chips}</div></section>`);
+    }
+    return groupBank('뺄셈 문제 직접 선택','1~20 − 1~10 중 답이 0~10인 문제입니다. ▶ 재생은 별도로 눌러주세요.',groups.join(''),SUB_PROBLEMS.length);
+  }
+  return '';
+}
+function stageButtons(){
+ const next=(mode==='addition'||mode==='subtraction')?'<button type="button" class="btn secondary" data-action="next">🎲 다음 문제 (랜덤)</button>':'';
+ return `<div class="play-controls">${next}<button type="button" class="btn" data-action="play" id="playBtn">▶ 애니메이션 재생</button><button type="button" class="btn secondary" data-action="reset">↻ 처음으로</button><button type="button" class="btn sparkle-btn" data-action="splash" id="splashBtn">✨ 띄용 정답!</button><button type="button" class="btn ghost hidden" data-action="recall" id="recallBtn">👀 그림 가리고 암산</button></div><div class="speedline">움직이는 속도 <select id="speedSelect" aria-label="애니메이션 속도"><option value="slow" ${speed==='slow'?'selected':''}>천천히</option><option value="normal" ${speed==='normal'?'selected':''}>보통</option><option value="fast" ${speed==='fast'?'selected':''}>빠르게</option></select></div>`;
+}
+function splashHTML(){return `<div id="resultSplash" class="result-splash" aria-hidden="true" role="button" tabindex="0" aria-label="정답 애니메이션을 닫으려면 누르세요"><div class="splash-inner"><span class="spark">✨ 띄용! ✨</span><strong id="splashValue">10</strong><small id="splashCaption">정답!</small><span class="tap-dismiss">눌러서 닫기</span></div></div>`;}
+function renderStage(){
+  if(mode==='numbers'){
+    const cards=range(10).map(i=>{
+      const n=i+1,patterns=patternsFor(n);
+      const frames=patterns.map(p=>`<div class="pattern-item">${frameHTML(n,{indices:p.indices,label:`${n}개, 윗줄 ${p.top}개 아랫줄 ${p.bottom}개`})}<span class="split-caption">${p.top} + ${p.bottom}</span></div>`).join('');
+      return `<article class="number-card" aria-label="${n}개, ${patterns.length}가지 배열"><div class="number-label"><strong>${n}</strong><small>${patterns.length}가지</small></div><div class="patterns">${frames}</div></article>`;
+    }).join('');
+    $('stageArea').innerHTML=`<div class="gallery-guide"><span class="counter-number">①</span> <b>윗줄 0~5개 · 아랫줄 0~5개</b>의 가능한 모든 분배를 보여줘요.</div><div class="gallery ${galleryMode}">${cards}</div><p class="view-tip">${galleryMode==='compact'?'1~10의 모든 35가지 배치를 한눈에 비교해요.':'각 숫자의 여러 배치를 크게 보며 스크롤할 수 있어요.'}</p>`;
+    return;
+  }
+  const v=actual();let left=0,right=0,labels=['',''],message='',subtitle='';
+  if(mode==='complement'){
+    left=v.a;right=v.b;labels=[`${left}개`,` ${right}개`];
+    subtitle='작은 수가 큰 수 쪽으로 이동하면서 10칸을 채워요.';
+    message=v.b===0?'10개가 이미 가득 찼어요. <b>10+0=10</b>!':`<b>${v.a}+${v.b}</b>를 합치면 10개가 됩니다.`;
+  }else if(mode==='addition'){
+    left=v.a;right=v.b;const big=Math.max(left,right),small=Math.min(left,right),need=10-big;
+    labels=[`${left}개`,`${right}개`];subtitle='작은 수에서 필요한 만큼 옮겨 큰 수를 10으로 만들어요.';
+    message=need===0?`<b>${big}</b>은 이미 10이에요. <b>10+${small}=${v.answer}</b>!`:`<b>${small}</b>을 <b>${small-need}+${need}</b>로 가르고, <b>${need}</b>개를 옮겨요.`;
+  }else{
+    left=Math.min(v.a,10);right=Math.max(v.a-10,0);
+    labels=[v.a>=10?'10개 묶음':`${v.a}개 묶음`,`${right}개 더`];
+    subtitle=subtractionMethod==='direct'?'큰수에서 칸쵸를 하나씩 순서대로 빼요.':'10개 묶음에서 먼저 빼고, 남은 칸쵸와 합쳐요.';
+    message=subtractionMethod==='ten'&&v.a>10?`<b>(10−${v.b})+${right}=${v.answer}</b> : 10개 묶음에서 먼저 빼요.`:v.a<=10?'10보다 작은 수는 채워진 칸에서 바로 빼요.':`${v.a}개에서 <b>${v.b}개</b>를 하나씩 없애요.`;
+  }
+  const frames=`<div class="board-pair" id="boardPair"><div class="board-unit" id="boardLeft"><div class="board-label" id="labelLeft">${labels[0]} <b id="leftCount">${left}</b></div>${frameHTML(left,{id:'leftFrame'})}</div><div class="operator">${mode==='subtraction'?'+':'+'}</div><div class="board-unit" id="boardRight"><div class="board-label" id="labelRight">${labels[1]} <b id="rightCount">${right}</b></div>${frameHTML(right,{id:'rightFrame'})}</div></div>`;
+  $('stageArea').innerHTML=`<div class="stage" id="demoStage"><h3 class="stage-title">${v.a} ${v.operator} ${v.b} = <span id="answerPlace">?</span></h3><p class="stage-sub">${subtitle}</p>${frames}${mode==='subtraction'?'<div class="tray">꺼낸 칸쵸 <span class="tray-target" id="discardTray">🍪 0개</span></div>':''}<div class="story" id="storyText">${message}</div><p class="stage-footer" id="stageFooter">그림을 먼저 살펴보고 ▶ 재생을 누르세요. 다른 문제는 아래에서 선택할 수 있어요.</p>${splashHTML()}</div>${stageButtons()}${bankHTML()}<div class="recall-wrap" id="recallPanel"><div class="recall-head">🧠 그림 없이 기억하기</div><div class="recall-question">${v.a} ${v.operator} ${v.b} = ?</div><div id="recallAnswer" class="recall-answer hidden">${v.answer}</div><button type="button" class="btn secondary" data-action="showAnswer">정답 확인하기</button><button type="button" class="btn ghost" data-action="returnVisual">그림 다시 보기</button></div>`;
+}
+function getBoard(side){return $(side==='left'?'leftFrame':'rightFrame');}
+function cell(side,index){return getBoard(side)?.querySelector(`.slot[data-index="${index}"]`);}
+function filledCount(side){return getBoard(side)?.querySelectorAll('.slot.filled').length??0;}
+function updateCounter(){if($('leftCount'))$('leftCount').textContent=filledCount('left');if($('rightCount'))$('rightCount').textContent=filledCount('right');}
+function tell(html){if($('storyText'))$('storyText').innerHTML=html;}
+function footer(msg){if($('stageFooter'))$('stageFooter').textContent=msg;}
+function duration(){return speed==='slow'?700:speed==='normal'?440:235;}
+async function fly(src,dst,ms,action,myId){
+  if(myId!==runId)return false;
+  const cookie=src?.querySelector('.cookie');if(!cookie||!dst)return false;
+  const a=cookie.getBoundingClientRect(),b=dst.getBoundingClientRect();
+  const ghost=cookie.cloneNode(true);ghost.classList.add('flying-cookie');
+  Object.assign(ghost.style,{left:a.left+'px',top:a.top+'px',width:a.width+'px',height:a.height+'px'});
+  document.body.appendChild(ghost);cookie.style.visibility='hidden';
+  const dx=b.left+b.width/2-a.left-a.width/2,dy=b.top+b.height/2-a.top-a.height/2;
+  const frames=action==='remove'?
+   [{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*.52}px,${dy*.52-28}px) scale(1.11) rotate(22deg)`,opacity:1,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.1) rotate(66deg)`,opacity:0}]:
+   [{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*.5}px,${dy*.5-26}px) scale(1.1) rotate(16deg)`,opacity:1,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(1) rotate(0)`,opacity:1}];
+  const anim=ghost.animate(frames,{duration:ms,easing:'cubic-bezier(.3,.07,.21,.98)',fill:'forwards'});
+  try{await anim.finished;}catch(e){}
+  ghost.remove();if(myId!==runId)return false;
+  src.classList.remove('filled');src.innerHTML='';
+  if(action==='transfer'){
+    dst.classList.add('filled','spark');dst.innerHTML=token();
+    setTimeout(()=>{if(myId===runId)dst.classList.remove('spark')},650);
+  }
+  updateCounter();return true;
+}
+async function animateMove(giver,receiver,amount,myId){
+  const from=filledCount(giver),to=filledCount(receiver);
+  for(let i=0;i<amount;i++){
+    if(myId!==runId)return false;
+    tell(`<span class="pill">${i+1} / ${amount}개 이동</span> 칸쵸가 빈칸으로 날아가고 있어요!`);
+    if(!await fly(cell(giver,from-amount+i),cell(receiver,to+i),duration(),'transfer',myId))return false;
+    await delay(speed==='slow'?155:65);
+  }
+  return myId===runId;
+}
+async function animateSubtract(total,amount,method,myId){
+  const extra=Math.max(total-10,0);
+  for(let i=0;i<amount;i++){
+    if(myId!==runId)return false;
+    let source;
+    if(method==='ten'&&total>=10){source=cell('left',9-i);}
+    else if(i<extra){source=cell('right',extra-1-i);}
+    else{source=cell('left',Math.min(total,10)-1-(i-extra));}
+    tell(`<span class="pill">${i+1} / ${amount}개 제거</span> 현재 남은 칸쵸 ${total-i-1}개!`);
+    if(!await fly(source,$('discardTray'),duration()*.82,'remove',myId))return false;
+    $('discardTray').textContent=`🍪 ${i+1}개`;
+    await delay(speed==='slow'?125:60);
+  }
+  return myId===runId;
+}
+function hideSplash(){
+  if(splashHideTimer!==null){clearTimeout(splashHideTimer);splashHideTimer=null;}
+  const el=$('resultSplash');if(!el)return;
+  el.classList.remove('on');el.setAttribute('aria-hidden','true');
+}
+function showSplash(value,caption,myId){
+  if(myId!==runId)return;
+  const el=$('resultSplash');if(!el)return;
+  $('splashValue').textContent=value;$('splashCaption').textContent=caption;
+  el.classList.remove('on');void el.offsetWidth;el.classList.add('on');el.setAttribute('aria-hidden','false');
+  splashHideTimer=setTimeout(()=>{if(myId===runId)hideSplash();},2600);
+}
+function showResultOnDemand(){
+  if(mode==='numbers'||running)return;
+  const v=actual();
+  showSplash(v.answer,`${v.a} ${v.operator} ${v.b} = ${v.answer}`,runId);
+}
+async function play(){
+  if(mode==='numbers')return;
+  const bankScroll=document.querySelector('.bank-list')?.scrollTop??0;
+  invalidate();renderStage();
+  const bank=document.querySelector('.bank-list');if(bank)bank.scrollTop=bankScroll;
+  const myId=++runId;running=true;
+  const v=actual();const playBtn=$('playBtn');
+  if(playBtn){playBtn.disabled=true;playBtn.textContent='🍪 칸쵸 움직이는 중...';}
+  const splashBtn=$('splashBtn');if(splashBtn)splashBtn.disabled=true;
+  await delay(120);if(myId!==runId)return;
+  if(mode==='complement'){
+    const giver=v.a<=v.b?'left':'right',receiver=giver==='left'?'right':'left';
+    const move=Math.min(v.a,v.b);
+    $('boardLeft').classList.toggle('giver',giver==='left');$('boardRight').classList.toggle('giver',giver==='right');
+    $('boardLeft').classList.toggle('receiver',receiver==='left');$('boardRight').classList.toggle('receiver',receiver==='right');
+    if(move===0){tell('<span class="pill">완성!</span> 10칸이 이미 가득 차 있어요. 10+0=10!');await delay(320);}
+    else{tell(`작은 수 <b>${move}</b>개를 큰 수 <b>${Math.max(v.a,v.b)}</b>개 쪽으로 옮겨요.`);if(!await animateMove(giver,receiver,move,myId))return;}
+    tell(`<span class="pill">완성!</span> ${v.a} + ${v.b} = <b>10</b> 🎉`);
+  }else if(mode==='addition'){
+    const giver=v.a<=v.b?'left':'right',receiver=giver==='left'?'right':'left';
+    const small=Math.min(v.a,v.b),big=Math.max(v.a,v.b),need=10-big,remain=small-need;
+    $('boardLeft').classList.toggle('giver',giver==='left');$('boardRight').classList.toggle('giver',giver==='right');
+    $('boardLeft').classList.toggle('receiver',receiver==='left');$('boardRight').classList.toggle('receiver',receiver==='right');
+    if(need===0){tell(`<span class="pill">이미 10!</span> ${big}개 상자는 꽉 찼어요. ${small}개를 더하면 ${v.answer}예요.`);await delay(350);}
+    else{
+      for(let i=small-need;i<small;i++)cell(giver,i)?.querySelector('.cookie')?.classList.add('donor');
+      tell(`<span class="pill">가르기</span> ${small}을 <b>${remain}+${need}</b>로 나누어요. ${need}개를 10칸 상자로 옮겨요.`);
+      await delay(speed==='slow'?600:260);if(myId!==runId)return;
+      if(!await animateMove(giver,receiver,need,myId))return;
+    }
+    tell(`<span class="pill">10 완성!</span> ${big}+${need}=10, 남은 ${remain}개와 합치면 <b>${v.answer}</b>개!`);
+  }else{
+    if(subtractionMethod==='ten'&&v.a>=10){
+      tell(`<span class="pill">10에서 먼저 빼기</span> 10−${v.b}를 하고, 오른쪽의 ${Math.max(0,v.a-10)}개는 그대로 두어요.`);
+    }else{
+      tell(`<span class="pill">차례대로 빼기</span> ${v.a}개에서 ${v.b}개를 하나씩 없애요.`);
+    }
+    if(!await animateSubtract(v.a,v.b,subtractionMethod,myId))return;
+    const extra=Math.max(v.a-10,0);
+    if(subtractionMethod==='ten'&&v.a>=10)tell(`<span class="pill">완성!</span> (10−${v.b})+${extra} = <b>${v.answer}</b>개!`);
+    else tell(`<span class="pill">완성!</span> ${v.a}−${v.b} = <b>${v.answer}</b>개!`);
+  }
+  if(myId!==runId)return;
+  $('answerPlace').textContent=v.answer;$('answerPlace').classList.add('finished-inline');
+  $('recallBtn')?.classList.remove('hidden');
+  if(playBtn){playBtn.textContent='▶ 다시 재생';playBtn.disabled=false;}
+  if(splashBtn)splashBtn.disabled=false;
+  running=false;
+  footer('움직임이 끝났어요! ✨ 띄용 정답 버튼을 누르면 정답이 크게 나타나요.');
+}
+function selectProblem(scrollToStage=true){
+  const bankScroll=document.querySelector('.bank-list')?.scrollTop??0;
+  invalidate();renderStage();
+  const bank=document.querySelector('.bank-list');if(bank)bank.scrollTop=bankScroll;
+  if(scrollToStage)$('demoStage')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function nextProblem(){
+  if(mode!=='addition'&&mode!=='subtraction')return;
+  nextRandomProblem(mode);
+  selectProblem(false);
+}
+function recall(){
+  if(running||mode==='numbers')return;
+  hideSplash();$('recallPanel')?.classList.add('visible');$('demoStage')?.classList.add('recall-hidden');
+  $('recallPanel')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function reset(){invalidate();renderStage();}
+$('modeNav').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)setMode(b.dataset.mode);});
+$('modeControls').addEventListener('change',e=>{
+  const el=e.target;
+  if(el.name==='viewMode'){galleryMode=el.value;invalidate();renderStage();}
+});
+$('modeControls').addEventListener('click',e=>{
+  const b=e.target.closest('[data-method]');if(!b)return;
+  subtractionMethod=b.dataset.method;renderControls();selectProblem(false);
+});
+$('stageArea').addEventListener('click',e=>{
+  const splash=e.target.closest('#resultSplash');if(splash){hideSplash();return;}
+  const comp=e.target.closest('[data-comp]');
+  if(comp){complement=Number(comp.dataset.comp);selectProblem();return;}
+  const add=e.target.closest('[data-add]');
+  if(add){[addLeft,addRight]=add.dataset.add.split(',').map(Number);selectProblem();return;}
+  const sub=e.target.closest('[data-sub]');
+  if(sub){[subtractTotal,subtractBy]=sub.dataset.sub.split(',').map(Number);selectProblem();return;}
+  const b=e.target.closest('[data-action]');if(!b)return;
+  if(b.dataset.action==='play')play();
+  else if(b.dataset.action==='next')nextProblem();
+  else if(b.dataset.action==='splash')showResultOnDemand();
+  else if(b.dataset.action==='reset')reset();
+  else if(b.dataset.action==='recall')recall();
+  else if(b.dataset.action==='showAnswer')$('recallAnswer')?.classList.remove('hidden');
+  else if(b.dataset.action==='returnVisual'){$('recallPanel')?.classList.remove('visible');$('demoStage')?.classList.remove('recall-hidden');}
+});
+$('stageArea').addEventListener('keydown',e=>{
+  if(e.target.id==='resultSplash'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();hideSplash();}
+});
+$('stageArea').addEventListener('change',e=>{if(e.target.id==='speedSelect')speed=e.target.value;});
+$('heroFrame').innerHTML=frameHTML(7);
+setMode('numbers');
+})();
+</script>
+</body>
+</html>
