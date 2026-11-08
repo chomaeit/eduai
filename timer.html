@@ -1,0 +1,2028 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c100f">
+  <title>집중 타이머</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      color: #edf1e9;
+      background: #0c100f;
+      --muted: #a3b3a9;
+      --accent: #bee7c9;
+      --line: #34433c;
+      --panel: #17201c;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      display: grid;
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0;
+      place-items: center;
+      background: radial-gradient(ellipse at 50% 10%, #1d2b24, #0c100f 70%);
+    }
+
+    .setup {
+      display: grid;
+      justify-items: center;
+      gap: clamp(14px, 3.5svh, 30px);
+      width: min(100%, 440px);
+      margin: 0;
+      padding: 28px 18px;
+      text-align: center;
+    }
+
+    .setup-header { position: relative; display: grid; width: 100%; justify-items: center; gap: 9px; }
+
+    .setup-header svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.4;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 5vw, 1.6rem);
+      font-weight: 650;
+      letter-spacing: -.04em;
+    }
+
+    .dial {
+      position: relative;
+      display: grid;
+      aspect-ratio: 1;
+      place-items: center;
+      container-type: inline-size;
+      isolation: isolate;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dial::before {
+      position: absolute;
+      z-index: -1;
+      inset: 9%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, #18251e, #111815 75%);
+      content: "";
+    }
+
+    .dial svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; }
+    .ticks { stroke: #44594e; stroke-width: 3; stroke-dasharray: .12 .88; }
+    .major-ticks { stroke: #7a9485; stroke-width: 6; stroke-dasharray: .023 .977; }
+    .track { stroke: #32443b; stroke-width: 2; }
+    .setup-dial { width: min(76vw, 272px); }
+
+    .duration-field {
+      display: grid;
+      position: absolute;
+      inset: 20%;
+      align-content: center;
+      justify-items: center;
+      gap: 8px;
+      border-radius: 50%;
+      cursor: text;
+    }
+
+    .duration-field input {
+      width: 85%;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: inherit;
+      caret-color: var(--accent);
+      font: inherit;
+      font-size: clamp(2.75rem, 15vw, 4.75rem);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -.065em;
+      text-align: center;
+    }
+
+    .duration-field:hover .unit,
+    .duration-field:focus-within .unit { color: var(--accent); }
+
+    .unit, .setup-note, .lock-status {
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    .unit { display: flex; align-items: center; gap: 5px; }
+    .unit svg { position: static; width: 12px; height: 12px; stroke: currentColor; }
+
+    button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    .setup-options { display: grid; width: 100%; gap: 10px; }
+
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .preset, .control {
+      min-height: 46px;
+      padding: 6px 4px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      font-size: .86rem;
+      font-weight: 650;
+    }
+
+    .preset:hover, .control:hover { border-color: #819e8e; }
+
+    .preset[aria-pressed="true"] {
+      border-color: #759985;
+      color: var(--accent);
+      background: #25392e;
+    }
+
+    .primary {
+      display: inline-flex;
+      min-height: 51px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #15271e;
+      font-size: .95rem;
+      font-weight: 750;
+    }
+
+    .primary:hover { background: #d2f0d9; }
+    .primary svg { width: 13px; height: 13px; fill: currentColor; }
+
+    .setup-note {
+      min-height: 2.25em;
+      margin: 3px 0 0;
+    }
+
+    .setup-note[data-error] { color: #ffc9b5; }
+
+    .focus-view {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
+      background: radial-gradient(circle at center, #151e19, #0a0e0c 72%);
+    }
+
+    .focus-view:fullscreen { width: 100%; height: 100%; }
+    .focus-view:-webkit-full-screen { width: 100%; height: 100%; }
+
+    .focus-stage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 100%;
+      height: 100%;
+      place-items: center;
+      transform: translate(-50%, -50%) rotate(var(--ui-rotation, 0deg));
+      --stage-color: #bc9af7;
+    }
+
+    .session-label {
+      position: absolute;
+      z-index: 3;
+      top: max(18px, env(safe-area-inset-top), env(safe-area-inset-bottom));
+      left: max(18px, env(safe-area-inset-left), env(safe-area-inset-right));
+      display: grid;
+      gap: 5px;
+      pointer-events: none;
+    }
+
+    .session-label strong { color: var(--stage-color); font-size: .95rem; font-weight: 650; }
+    .session-label span { color: var(--muted); font-size: .73rem; }
+    .fullscreen-button { position: absolute; z-index: 3; top: max(14px, env(safe-area-inset-top), env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right), env(safe-area-inset-left)); opacity: .65; }
+    .fullscreen-button:hover, .fullscreen-button:focus-visible { opacity: 1; }
+
+    .focus-dial {
+      width: min(85vw, 80vh, 760px);
+      width: var(--dial-size, min(85vw, 80dvh, 760px));
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .focus-dial .track { stroke-width: 3; }
+    .focus-dial .ticks { opacity: .72; }
+    .focus-dial .major-ticks { opacity: .76; }
+
+    .progress {
+      stroke: white;
+      stroke-width: 6;
+      fill: none;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 0;
+    }
+
+    .quarter-arcs { stroke-width: 4; }
+    .rainbow-arc { stroke: url(#rainbow-gradient); stroke-width: 4; opacity: 0; }
+    .focus-view[data-urgency="rainbow"] .rainbow-arc,
+    .focus-view[data-urgency="countdown"] .rainbow-arc { opacity: 1; animation: rainbow-flow 5s linear infinite; }
+    .focus-view[data-urgency="rainbow"] .quarter-arcs,
+    .focus-view[data-urgency="countdown"] .quarter-arcs { opacity: 0; }
+    .focus-view[data-state="running"] .progress { transition: stroke-dashoffset .2s linear; }
+    .focus-view[data-state="paused"] .ring-colors { opacity: .55; }
+    .focus-view[data-state="paused"] .rainbow-arc { animation-play-state: paused; }
+    .focus-view[data-state="done"] .ring-colors { visibility: hidden; }
+    .focus-view[data-state="done"] .track { stroke: #658b74; }
+
+    .readout {
+      position: absolute;
+      inset: 0;
+      text-align: center;
+      --message-offset: 19cqi;
+    }
+
+    .time {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: max-content;
+      transform: translate(-50%, -50%);
+      font-size: min(17vw, 18vh, 10rem);
+      font-size: min(24cqi, 10.5rem);
+      font-weight: 350;
+      line-height: .94;
+      letter-spacing: -.07em;
+    }
+
+    .time-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: .12em .06em;
+      border: 0;
+      border-radius: 16px;
+      background: transparent;
+      color: #edf1e9;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: 1;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .number-display, .number-group { display: inline-flex; align-items: center; justify-content: center; }
+    .number-display { gap: .07em; height: 1em; font-variant-numeric: tabular-nums lining-nums; line-height: 1; }
+    .number-group { gap: .015em; letter-spacing: -.065em; }
+    .number-colon { display: flex; flex: 0 0 .14em; height: .44em; align-self: center; flex-direction: column; justify-content: space-between; align-items: center; margin-inline: .035em; }
+    .number-colon::before, .number-colon::after { display: block; width: .065em; height: .065em; border-radius: 50%; background: currentColor; content: ""; }
+    .number-display svg.digit-svg { position: static; width: .46em; height: .79em; fill: currentColor; overflow: visible; }
+    .number-display[data-theme="clean"] { font-family: system-ui, sans-serif; font-weight: 300; }
+    .number-display[data-theme="bold"] { font-family: system-ui, sans-serif; font-weight: 800; }
+    .number-display[data-theme="mono"] { font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace; font-weight: 400; }
+    .number-display[data-theme="classic"] { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+    .number-display[data-theme="outline"] .numeral { font-family: system-ui, sans-serif; font-weight: 650; -webkit-text-fill-color: transparent; -webkit-text-stroke: .012em currentColor; }
+    .number-display[data-theme="italic"] { font-family: system-ui, sans-serif; font-style: italic; font-weight: 600; }
+    .number-display[data-theme="stencil"] .numeral { font-family: "Courier New", monospace; font-weight: 900; mask-image: linear-gradient(to bottom, black 35%, transparent 35%, transparent 38%, black 38%, black 65%, transparent 65%, transparent 68%, black 68%); }
+    .number-display[data-theme^="flip-"] { gap: .08em; font-family: system-ui, sans-serif; font-weight: 650; }
+    .number-display[data-theme^="flip-"] .number-group { gap: .035em; letter-spacing: normal; }
+    .flip-digit {
+      position: relative;
+      display: inline-block;
+      width: .52em;
+      height: .94em;
+      border-radius: .065em;
+      perspective: 4em;
+      color: var(--card-ink, #f1f3f5);
+      box-shadow: 0 .03em .04em #0005, 0 0 0 1px #ffffff0a;
+      --card-top: #2c323a;
+      --card-bottom: #1b2027;
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      border-radius: inherit;
+      place-items: center;
+      backface-visibility: hidden;
+      transform-origin: center;
+    }
+
+    .card-glyph { font-size: .84em; font-variant-numeric: tabular-nums; line-height: 1; }
+    .card-upper { background: var(--card-top); clip-path: inset(0 0 50% 0); }
+    .card-lower { background: var(--card-bottom); clip-path: inset(50% 0 0 0); }
+    .flip-digit::after { position: absolute; z-index: 4; top: 50%; right: 0; left: 0; height: 1px; background: #0006; content: ""; }
+    .card-outgoing { z-index: 3; animation: card-fold-up .18s ease-in both; }
+    .card-incoming { z-index: 2; animation: card-fold-down .18s ease-out .18s both; }
+    .number-display[data-theme="flip-paper"] .flip-digit { --card-top: #f5ebd8; --card-bottom: #dfd1b8; --card-ink: #3f352a; }
+    .number-display[data-theme="flip-color"] .flip-digit { --card-top: hsl(var(--card-hue) 46% 35%); --card-bottom: hsl(var(--card-hue) 50% 24%); --card-ink: #fff8ef; }
+    .number-display[data-theme="flip-sunset"] .flip-digit { --card-top: linear-gradient(135deg, #e5ab8a, #bd6d8c); --card-bottom: linear-gradient(135deg, #bd758a, #715c91); --card-ink: #fff7eb; }
+    .number-display[data-theme="flip-aurora"] .flip-digit { --card-top: linear-gradient(135deg, #284e5f, #484068); --card-bottom: linear-gradient(135deg, #172f41, #302644); }
+    .number-display[data-theme="flip-aurora"] .card-glyph { background: linear-gradient(100deg, #a8f5d9, #bbbcff, #ffbadd, #a8f5d9); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: aurora-drift 7s linear infinite; }
+    .focus-view[data-state="paused"] .card-glyph { animation-play-state: paused; }
+    .number-display[data-layout="composition"] {
+      display: block;
+      width: 2.6em;
+      height: 2.8em;
+      gap: 0;
+      padding: 0;
+      border-radius: .6em;
+      box-shadow: 0 .06em .16em #0005;
+    }
+
+    .number-display[data-layout="composition"] > .number-group,
+    .number-display[data-layout="composition"] > .number-colon { display: none; }
+    .watch-composition { display: block; width: 100%; height: 100%; }
+    .number-display svg.watch-face-svg { position: static; display: block; width: 100%; height: 100%; fill: none; overflow: visible; }
+    .theme-preview[data-layout="composition"] { justify-self: center; font-size: 18px; }
+    .theme-preview[data-theme="watch-pastel"] { justify-self: center; min-height: 46px; padding: .3em; border: 3px solid #cad7ed; border-radius: 18px; background: #f1f3f8; color: #3593ed; font-size: 22px; font-weight: 600; }
+    .focus-view[data-composed="true"] .phase { top: calc(100% + 8px); }
+    .focus-view[data-composed="true"][data-urgency="countdown"] .time { font-size: min(24cqi, 10.5rem); }
+    .pastel-marker { display: none; }
+    .focus-view[data-theme="watch-pastel"] { background: radial-gradient(ellipse at 45% 35%, #fcfdff, #e9ebf2); }
+    .focus-view[data-theme="watch-pastel"] .dial::before { background: radial-gradient(circle at 40% 25%, #fff, #f1f2f7); box-shadow: 0 8px 40px #8e9fc112; }
+    .focus-view[data-theme="watch-pastel"] .ticks { stroke: #d1d7e2; }
+    .focus-view[data-theme="watch-pastel"] .major-ticks { stroke: #b6c1d5; }
+    .focus-view[data-theme="watch-pastel"] .track { stroke: #dfe2ea; stroke-width: 10; }
+    .focus-view[data-theme="watch-pastel"] .progress { stroke-width: 12; }
+    .focus-view[data-theme="watch-pastel"] .quarter-arcs,
+    .focus-view[data-theme="watch-pastel"] .rainbow-arc { stroke-width: 10; }
+    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(1) { stroke: #bdc0f0; }
+    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(2) { stroke: #a9dbe8; }
+    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(3) { stroke: #b5ded5; }
+    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(4) { stroke: #e7c6db; }
+    .focus-view[data-theme="watch-pastel"] .pastel-marker { display: block; fill: #428fd5; stroke: #eff9ff; stroke-width: .8; }
+    .focus-view[data-theme="watch-pastel"][data-state="done"] .pastel-marker { display: none; }
+    .focus-view[data-theme="watch-pastel"] .time-button { color: #3593ed; }
+    .focus-view[data-theme="watch-pastel"] .number-display { font-family: system-ui, sans-serif; font-weight: 600; }
+    .focus-view[data-theme="watch-pastel"] .phase,
+    .focus-view[data-theme="watch-pastel"] .session-label span,
+    .focus-view[data-theme="watch-pastel"] .lock-status { color: #738194; }
+    .focus-view[data-theme="watch-pastel"] .session-label strong { color: #478cc9; }
+    .focus-view[data-theme="watch-pastel"] .icon-button,
+    .focus-view[data-theme="watch-pastel"] .control,
+    .focus-view[data-theme="watch-pastel"] .slot-tab { color: #526880; background: #f6f8fb; border-color: #cbd5e1; }
+    .focus-view[data-theme="watch-pastel"] .slot-tab span:last-child { color: #738194; }
+    .focus-view[data-theme="watch-pastel"] .slot-tab[aria-pressed="true"] { color: #3877af; background: #e2edf7; border-color: #8bb1d2; }
+    .focus-view[data-urgency="countdown"] .time { font-size: min(39cqi, 15rem); color: var(--stage-color); }
+    .focus-view[data-urgency="countdown"] .readout { --message-offset: 28cqi; }
+    .focus-view[data-urgency="countdown"] .minutes,
+    .focus-view[data-urgency="countdown"] .number-colon { display: none; }
+
+    .second-pulse { position: absolute; inset: 12%; border: 1px solid var(--stage-color); border-radius: 50%; opacity: 0; }
+    .focus-view[data-urgency="countdown"][data-state="running"] .second-pulse { animation: second-pulse 1s ease-out infinite; }
+    .phase:empty { display: none; }
+
+    .phase {
+      position: absolute;
+      top: calc(50% + var(--message-offset));
+      left: 50%;
+      width: 68%;
+      transform: translateX(-50%);
+      margin: 0;
+      color: #cad9ce;
+      font-family: inherit;
+      font-size: clamp(.9rem, 4cqi, 1.7rem);
+      font-weight: 400;
+      letter-spacing: .035em;
+      line-height: 1.65;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+    }
+
+    .focus-view[data-state="done"] .phase { color: var(--accent); }
+
+    .focus-trigger {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .focus-trigger:focus-visible { outline-offset: -8px; }
+
+    .focus-controls {
+      position: absolute;
+      z-index: 3;
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom), env(safe-area-inset-top));
+      left: max(14px, env(safe-area-inset-left));
+      display: grid;
+      justify-content: center;
+      grid-template-columns: repeat(2, minmax(0, 144px));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .focus-controls button {
+      min-height: 46px;
+      pointer-events: auto;
+      box-shadow: 0 4px 14px #0a0e0c80;
+    }
+
+    .lock-status {
+      grid-column: 1 / -1;
+      justify-self: center;
+      margin: 0;
+      text-align: center;
+    }
+
+    .lock-status:empty { display: none; }
+
+    .menu-button, .icon-button {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      padding: 10px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel);
+    }
+
+    .menu-button { position: absolute; top: 0; right: 0; }
+    .menu-button svg, .icon-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; }
+    .menu-button:hover, .icon-button:hover { border-color: #819e8e; }
+    button:disabled { opacity: .45; cursor: default; }
+
+    .rotation-summary {
+      display: grid;
+      width: 100%;
+      gap: 9px;
+      padding: 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #121b16;
+      color: var(--muted);
+      font-size: .74rem;
+      text-align: center;
+    }
+
+    .rotation-summary:hover { border-color: #819e8e; }
+    .rotation-summary strong { color: var(--accent); font-size: .78rem; font-weight: 600; }
+    .summary-times { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 5px 10px; }
+    .rotation-ready { display: grid; justify-items: center; gap: 6px; }
+    .rotation-ready p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.6; }
+
+    .slot-tabs {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      pointer-events: auto;
+    }
+
+    .slot-tab {
+      display: grid;
+      gap: 5px;
+      padding: 8px 3px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #131d17;
+      font-size: .74rem;
+    }
+
+    .slot-tab span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .slot-tab[aria-pressed="true"] { border-color: #91b39e; color: var(--accent); background: #25392e; }
+
+    .manager {
+      width: min(100% - 24px, 540px);
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      padding: 0;
+      border: 1px solid #4b6153;
+      border-radius: 24px;
+      background: #111a15;
+      color: inherit;
+      box-shadow: 0 24px 100px #0008;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .manager::backdrop { background: #050a07cc; }
+    body:has(.manager[open]) { overflow: hidden; }
+
+    .manager-header, .manager-footer {
+      position: sticky;
+      z-index: 1;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      background: #111a15;
+    }
+
+    .manager-header { top: 0; border-bottom: 1px solid var(--line); }
+    .manager-header h2 { margin: 0; font-size: 1.1rem; letter-spacing: -.03em; }
+    .manager-content { display: grid; gap: 30px; padding: 24px 22px; }
+    .manager-section { display: grid; gap: 13px; }
+    .manager h3 { margin: 0; font-size: .93rem; }
+    .manager p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.65; }
+    .manager .section-heading { display: grid; gap: 5px; }
+    .preset-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .preset-row { display: flex; align-items: center; gap: 3px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+    .preset-row label { flex: 1; display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: .78rem; }
+
+    .manager input[type="text"] {
+      width: 55px;
+      min-height: 42px;
+      padding: 6px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: #0d1510;
+      color: #edf1e9;
+      font: inherit;
+      font-size: 1rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .manager input[aria-invalid="true"] { border-color: #e0a28b; }
+    .remove-preset { width: 40px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.25rem; }
+    .remove-preset:hover { color: #ffc9b5; background: #30251e; }
+    .add-preset { background: transparent; color: var(--accent); }
+    .rotation-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 650; font-size: .93rem; cursor: pointer; }
+    .rotation-toggle input { width: 22px; height: 22px; margin: 0; accent-color: #bee7c9; cursor: pointer; }
+    .rotation-fields { display: grid; min-width: 0; gap: 0; padding: 0; margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .rotation-fields:disabled { opacity: .45; }
+    .rotation-row { display: flex; min-height: 65px; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
+    .rotation-row + .rotation-row { border-top: 1px solid var(--line); }
+    .rotation-row label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .8rem; }
+    .rotation-title { display: flex; gap: 9px; align-items: center; font-size: .86rem; }
+    .phone-icon { display: inline-block; width: 13px; height: 21px; margin-inline: 5px; border: 1px solid var(--accent); border-top-width: 3px; border-radius: 3px; }
+    .angle-90 { transform: rotate(90deg); }
+    .angle-180 { transform: rotate(180deg); }
+    .angle-270 { transform: rotate(270deg); }
+    .normal-value { color: var(--accent); font-size: .82rem; }
+    .sensor-area { display: grid; gap: 9px; }
+    .sensor-connect { justify-self: start; min-height: 40px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--accent); font-size: .77rem; }
+    .manager-footer { bottom: 0; display: grid; grid-template-columns: 1fr 2fr; border-top: 1px solid var(--line); }
+    .manager-message { grid-column: 1 / -1; }
+    .manager-message:empty { display: none; }
+    .manager .manager-message[data-error] { color: #ffc9b5; }
+
+    .manager input#focus-message { width: 100%; padding-inline: 12px; text-align: left; }
+    .message-label { color: var(--muted); font-size: .8rem; }
+    .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .theme-card { display: grid; min-height: 90px; gap: 10px; padding: 14px 5px 10px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); }
+    .theme-card[aria-pressed="true"] { color: var(--accent); border-color: #95b7a1; background: #25392e; }
+    .theme-card > span:last-child { color: var(--muted); font-size: .73rem; }
+    .theme-preview { font-size: 27px; }
+
+    .completion {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      overflow: hidden;
+      place-items: center;
+      border: 0;
+      background: radial-gradient(ellipse at 50% 35%, #282c56, #0b1025 70%);
+      color: #edfbff;
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .completion-content { position: relative; z-index: 2; display: grid; justify-items: center; gap: 14px; pointer-events: none; }
+    .completion-glow { position: absolute; z-index: -1; inset: -60%; background: conic-gradient(from 30deg, #35d4e900, #45d5ee80, #9895ff70, #f087d080, #edc26f50, #35d4e900); filter: blur(45px); animation: celebration-spin 24s linear infinite; pointer-events: none; }
+    .completion-rays { position: absolute; width: 150vmax; height: 150vmax; background: repeating-conic-gradient(from 0deg, #a9bfff28 0deg 1deg, transparent 1.5deg 12deg); mask-image: radial-gradient(circle, transparent 5%, black 19%, transparent 49%); animation: celebration-spin 40s linear infinite; pointer-events: none; }
+    .completion-symbol { position: relative; display: grid; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #c0eaff35, #9a8dff12 60%, transparent 72%); place-items: center; }
+    .completion-symbol::before, .completion-symbol::after, .completion-wave { position: absolute; inset: 4%; border: 2px solid #95eaff; border-radius: 50%; box-shadow: 0 0 16px #7eafff60, inset 0 0 20px #9a8eff25; animation: completion-wave 2.7s ease-out infinite; content: ""; }
+    .completion-symbol::after { border-color: #d7b0ff; animation-delay: -.9s; }
+    .completion-wave { border-color: #ffbfdb; animation-delay: -1.8s; }
+    .completion-symbol svg { width: 44%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 10px #9ce9ff); animation: bell-sway 1.6s ease-in-out infinite; transform-origin: 50% 20%; }
+    .completion-kicker { color: #c8dbff; font: 500 .78rem system-ui, sans-serif; letter-spacing: .25em; }
+    .completion-title { background: linear-gradient(100deg, #b6f6ff, #e4c3ff, #ffd0dc, #ffe5ad, #b6f6ff); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; letter-spacing: -.055em; animation: aurora-drift 6s linear infinite; }
+    .completion-detail { color: #d9ddf0; font-size: .9rem; }
+    .completion-hint { margin-top: 6px; padding: 8px 15px; border: 1px solid #d9e0ff35; border-radius: 99px; color: #c2cbe2; font-size: .78rem; }
+    .completion-particles { position: absolute; inset: 0; pointer-events: none; --burst-radius: min(42vmin, 300px); }
+    .completion-particles i { position: absolute; top: 44%; left: 50%; width: var(--size); height: var(--size); background: var(--spark-color); color: var(--spark-color); box-shadow: 0 0 12px currentColor; opacity: 0; animation: celebration-burst var(--duration) cubic-bezier(.12, .6, .3, 1) var(--delay) infinite; }
+    .completion-particles .spark { clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%); }
+    .completion-particles .confetti { height: calc(var(--size) * .5); border-radius: 2px; }
+
+    @keyframes rainbow-flow { to { filter: hue-rotate(360deg); } }
+    @keyframes second-pulse { from { transform: scale(.88); opacity: .6; } to { transform: scale(1.15); opacity: 0; } }
+    @keyframes completion-wave { from { transform: scale(.64); opacity: .7; } to { transform: scale(1.55); opacity: 0; } }
+    @keyframes bell-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+    @keyframes card-fold-up { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
+    @keyframes card-fold-down { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
+    @keyframes aurora-drift { to { background-position: 300% 0; } }
+    @keyframes celebration-spin { to { transform: rotate(360deg); } }
+    @keyframes celebration-burst {
+      0% { transform: translate(0, 0) scale(.15) rotate(0); opacity: 0; }
+      10% { opacity: 1; }
+      85% { opacity: .7; }
+      100% { transform: translate(calc(var(--dx) * var(--burst-radius)), calc(var(--dy) * var(--burst-radius))) scale(.45) rotate(var(--twist)); opacity: 0; }
+    }
+
+    .focus-stage[data-compact="true"] .focus-controls { top: 50%; right: max(16px, env(safe-area-inset-right)); bottom: auto; left: auto; grid-template-columns: 116px; transform: translateY(-50%); }
+    .focus-stage[data-compact="true"] .slot-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .focus-stage[data-compact="true"] .completion-content { grid-template-columns: minmax(90px, 160px) auto; grid-template-areas: "symbol kicker" "symbol title" "symbol detail" "symbol hint"; column-gap: 30px; row-gap: 8px; justify-items: start; text-align: left; }
+    .focus-stage[data-compact="true"] .completion-symbol { grid-area: symbol; }
+    .focus-stage[data-compact="true"] .completion-kicker { grid-area: kicker; }
+    .focus-stage[data-compact="true"] .completion-title { grid-area: title; font-size: clamp(1.8rem, 5vw, 3rem); }
+    .focus-stage[data-compact="true"] .completion-detail { grid-area: detail; }
+    .focus-stage[data-compact="true"] .completion-hint { grid-area: hint; }
+
+    @media (max-width: 350px) {
+      .manager-header, .manager-footer { padding-inline: 14px; }
+      .manager-content { padding-inline: 14px; }
+    }
+
+    @media (orientation: landscape) and (min-width: 520px) and (max-height: 460px) {
+      .setup { padding-block: 16px; }
+      .setup-dial { width: min(50vh, 230px); }
+      .duration-field input { font-size: min(14vh, 4.75rem); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .focus-view[data-state="running"] .progress { transition: none; }
+      .focus-view .rainbow-arc, .focus-view .second-pulse,
+      .completion-symbol::before, .completion-symbol::after, .completion-wave,
+      .completion-symbol svg, .card-glyph, .completion-glow,
+      .completion-rays, .completion-title, .completion-particles i { animation: none !important; }
+      .completion-particles i { opacity: .5; transform: translate(calc(var(--dx) * var(--burst-radius)), calc(var(--dy) * var(--burst-radius))); }
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="집중 타이머">
+    <section class="setup" id="setup" aria-label="시간 설정">
+      <header class="setup-header">
+        <button type="button" class="menu-button" id="open-manager" aria-label="타이머 관리" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" /><circle cx="9" cy="6" r="2" fill="#17201c" /><circle cx="15" cy="12" r="2" fill="#17201c" /><circle cx="9" cy="18" r="2" fill="#17201c" /></svg>
+        </button>
+        <svg viewBox="0 0 28 28" aria-hidden="true">
+          <circle cx="14" cy="14" r="10.5" />
+          <path d="M14 7.5V14l4 2.5M14 1v4" stroke-linecap="round" />
+        </svg>
+        <h1>집중 타이머</h1>
+      </header>
+
+      <div class="dial setup-dial">
+        <svg viewBox="0 0 240 240" aria-hidden="true">
+          <g transform="rotate(-90 120 120)">
+            <circle class="ticks" cx="120" cy="120" r="112" pathLength="60" />
+            <circle class="major-ticks" cx="120" cy="120" r="112" pathLength="12" />
+          </g>
+          <circle class="track" cx="120" cy="120" r="101" />
+          <path d="M108 19.7A101 101 0 0 1 132 19.7" stroke="#bee7c9" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <label class="duration-field">
+          <input id="duration" type="text" inputmode="numeric" enterkeyhint="done" maxlength="3"
+                 value="05" autocomplete="off" aria-label="집중 시간(분)" aria-describedby="setup-note">
+          <span class="unit" aria-hidden="true">
+            분
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="m3 10 7.5-7.5 3 3L6 13H3v-3Zm6-6 3 3" stroke-width="1.3" stroke-linejoin="round" />
+            </svg>
+          </span>
+        </label>
+      </div>
+
+      <div class="setup-options">
+        <div class="presets" id="presets" role="group" aria-label="빠른 시간 설정">
+          <button class="preset" type="button" data-minutes="5" aria-pressed="true">5분</button>
+          <button class="preset" type="button" data-minutes="10" aria-pressed="false">10분</button>
+          <button class="preset" type="button" data-minutes="15" aria-pressed="false">15분</button>
+          <button class="preset" type="button" data-minutes="30" aria-pressed="false">30분</button>
+          <button class="preset" type="button" data-minutes="60" aria-pressed="false">60분</button>
+        </div>
+        <button type="button" class="rotation-summary" id="rotation-summary" aria-label="회전 시간 관리" aria-haspopup="dialog">
+          <strong id="rotation-summary-title">회전으로 네 개의 타이머 전환</strong>
+          <span class="summary-times" id="summary-times"></span>
+        </button>
+        <div class="rotation-ready" id="rotation-ready">
+          <p>시작 전에도 휴대폰을 돌리면 해당 타이머가 시작돼요.</p>
+          <p id="rotation-connection-status" role="status" hidden></p>
+        </div>
+        <button class="primary" type="button" id="start">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.8v10.4a.7.7 0 0 0 1.1.6l8-5.2a.7.7 0 0 0 0-1.2l-8-5.2a.7.7 0 0 0-1.1.6Z" /></svg>
+          시작
+        </button>
+        <p class="setup-note" id="setup-note" role="status">가운데 숫자를 눌러 시간을 직접 입력하세요.</p>
+      </div>
+    </section>
+
+    <section class="focus-view" id="focus-view" aria-label="집중 화면" hidden>
+      <div class="focus-stage" id="focus-stage">
+      <div class="session-label">
+        <strong id="session-duration">5분 타이머</strong>
+        <span id="session-angle">일반 · 0°</span>
+      </div>
+      <button type="button" class="icon-button fullscreen-button" id="fullscreen-toggle" aria-label="전체 화면으로 보기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5" stroke-width="1.5" stroke-linecap="round" /></svg>
+      </button>
+      <div class="dial focus-dial">
+        <svg viewBox="0 0 240 240" aria-hidden="true">
+          <defs>
+            <linearGradient id="rainbow-gradient" x1="0" y1="0" x2="240" y2="240" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#b891ff" /><stop offset=".18" stop-color="#7eafff" />
+              <stop offset=".36" stop-color="#69e6d1" /><stop offset=".52" stop-color="#a6ed91" />
+              <stop offset=".68" stop-color="#f6dd73" /><stop offset=".84" stop-color="#ffa68a" />
+              <stop offset="1" stop-color="#ee8acb" />
+            </linearGradient>
+            <mask id="remaining-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+              <path class="progress" id="progress" d="M120 19A101 101 0 1 0 120 221A101 101 0 1 0 120 19" pathLength="100" />
+            </mask>
+          </defs>
+          <g transform="rotate(-90 120 120)">
+            <circle class="ticks" cx="120" cy="120" r="112" pathLength="60" />
+            <circle class="major-ticks" cx="120" cy="120" r="112" pathLength="12" />
+          </g>
+          <circle class="track" cx="120" cy="120" r="101" />
+          <g class="ring-colors" mask="url(#remaining-mask)">
+            <g class="quarter-arcs">
+              <path d="M120 19A101 101 0 0 0 19 120" stroke="#bc9af7" />
+              <path d="M19 120A101 101 0 0 0 120 221" stroke="#f2d46d" />
+              <path d="M120 221A101 101 0 0 0 221 120" stroke="#83daa2" />
+              <path d="M221 120A101 101 0 0 0 120 19" stroke="#f38c8c" />
+            </g>
+            <circle class="rainbow-arc" cx="120" cy="120" r="101" />
+          </g>
+          <circle class="pastel-marker" id="pastel-marker" cx="120" cy="19" r="4" />
+        </svg>
+        <div class="second-pulse" aria-hidden="true"></div>
+        <div class="readout">
+          <div class="time" id="remaining" role="timer" aria-label="남은 시간 5분 0초">
+            <button type="button" class="time-button" id="time-toggle" aria-label="타이머 일시정지">
+              <span class="number-display" id="number-display" data-theme="clean" aria-hidden="true">
+                <span class="number-group minutes" id="minutes-display"></span>
+                <span class="number-colon"></span>
+                <span class="number-group seconds" id="seconds-display"></span>
+                <span class="watch-composition" id="watch-composition" hidden></span>
+              </span>
+            </button>
+          </div>
+          <p class="phase" id="phase" role="status"></p>
+        </div>
+      </div>
+
+      <button type="button" class="focus-trigger" id="focus-trigger" aria-label="조작 버튼 보기"
+              aria-controls="focus-controls" aria-expanded="false"></button>
+      <div class="focus-controls" id="focus-controls" role="group" aria-label="타이머 조작" hidden>
+        <button type="button" class="primary" id="toggle">일시멈춤</button>
+        <button type="button" class="control" id="stop">정지</button>
+        <div class="slot-tabs" id="slot-tabs" role="group" aria-label="각도별 타이머 전환"></div>
+        <p class="lock-status" id="screen-lock-status" role="status"></p>
+      </div>
+      <button type="button" class="completion" id="completion" aria-label="타이머 종료 표시 끄기" hidden>
+        <span class="completion-glow" aria-hidden="true"></span>
+        <span class="completion-rays" aria-hidden="true"></span>
+        <span class="completion-particles" id="completion-particles" aria-hidden="true"></span>
+        <span class="completion-content" aria-hidden="true">
+          <span class="completion-symbol">
+            <span class="completion-wave"></span>
+            <svg viewBox="0 0 64 64"><path d="M16 43c4-5 5-9 5-17a11 11 0 0 1 22 0c0 8 1 12 5 17H16Zm11 7a5 5 0 0 0 10 0M29 11a3 3 0 0 1 6 0M10 24c-3 6-3 12 0 18m44-18c3 6 3 12 0 18" /></svg>
+          </span>
+          <span class="completion-kicker">00:00</span>
+          <span class="completion-title">집중 완료</span>
+          <span class="completion-detail" id="completion-detail"></span>
+          <span class="completion-hint">터치하면 종료 표시가 멈춰요</span>
+        </span>
+      </button>
+      </div>
+    </section>
+
+    <dialog class="manager" id="manager" aria-labelledby="manager-title">
+      <header class="manager-header">
+        <h2 id="manager-title">타이머 관리</h2>
+        <button type="button" class="icon-button" id="close-manager" aria-label="관리 화면 닫기" autofocus>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke-width="1.5" stroke-linecap="round" /></svg>
+        </button>
+      </header>
+      <div class="manager-content">
+        <section class="manager-section" aria-labelledby="appearance-heading">
+          <div class="section-heading">
+            <h3 id="appearance-heading">나의 집중 화면</h3>
+            <p>문구와 숫자 모양을 골라 나에게 편한 화면을 만드세요.</p>
+          </div>
+          <label class="message-label" for="focus-message">타이머에 표시할 문구 · 비워두면 표시하지 않아요</label>
+          <input type="text" id="focus-message" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="예. 지금은 이 일 하나만">
+          <div class="theme-grid" id="theme-grid" role="group" aria-label="숫자 테마 20개"></div>
+        </section>
+        <section class="manager-section" aria-labelledby="presets-heading">
+          <div class="section-heading">
+            <h3 id="presets-heading">나의 시간 버튼</h3>
+            <p>자주 쓰는 시간을 1~120분으로 설정하세요. 최대 10개까지 만들 수 있어요.</p>
+          </div>
+          <div class="preset-editor" id="preset-editor"></div>
+          <button type="button" class="control add-preset" id="add-preset">+ 시간 버튼 추가</button>
+        </section>
+
+        <section class="manager-section" aria-labelledby="rotation-heading">
+          <label class="rotation-toggle" for="rotation-enabled">
+            <span id="rotation-heading">회전으로 타이머 전환</span>
+            <input type="checkbox" id="rotation-enabled" checked>
+          </label>
+          <p>대기할 때의 방향이 0°예요. 시계 방향으로 돌리면 해당 타이머가 시작되고, 진행 중이던 타이머는 멈춰 보관됩니다.</p>
+          <fieldset class="rotation-fields" id="rotation-fields" aria-label="회전별 시간">
+            <div class="rotation-row">
+              <span class="rotation-title"><span class="phone-icon" aria-hidden="true"></span>일반 · 0°</span>
+              <span class="normal-value" id="normal-value">첫 화면에서 설정</span>
+            </div>
+            <div class="rotation-row">
+              <span class="rotation-title"><span class="phone-icon angle-90" aria-hidden="true"></span>90°</span>
+              <label><input type="text" id="rotation-90" inputmode="numeric" enterkeyhint="done" maxlength="3" aria-label="90도 타이머 시간">분</label>
+            </div>
+            <div class="rotation-row">
+              <span class="rotation-title"><span class="phone-icon angle-180" aria-hidden="true"></span>180°</span>
+              <label><input type="text" id="rotation-180" inputmode="numeric" enterkeyhint="done" maxlength="3" aria-label="180도 타이머 시간">분</label>
+            </div>
+            <div class="rotation-row">
+              <span class="rotation-title"><span class="phone-icon angle-270" aria-hidden="true"></span>270°</span>
+              <label><input type="text" id="rotation-270" inputmode="numeric" enterkeyhint="done" maxlength="3" aria-label="270도 타이머 시간">분</label>
+            </div>
+          </fieldset>
+          <p>기억하는 타이머는 네 개뿐이에요. 돌아오면 남은 시간부터 계속하고, 끝난 타이머는 직접 다시 시작할 수 있어요. 정지를 누르면 네 개 모두 초기화됩니다.</p>
+          <div class="sensor-area">
+            <p id="sensor-status" role="status"></p>
+            <button type="button" class="sensor-connect" id="sensor-connect">회전 감지 연결</button>
+          </div>
+        </section>
+      </div>
+      <footer class="manager-footer">
+        <p class="manager-message" id="manager-message" role="status"></p>
+        <button type="button" class="control" id="cancel-manager">취소</button>
+        <button type="button" class="primary" id="save-manager">설정 저장</button>
+      </footer>
+    </dialog>
+  </main>
+
+  <script>
+    const minuteMs = 60_000;
+    const maxMinutes = 120;
+    const storageKey = 'focus-timer.settings.v1';
+    const defaults = {
+      version: 1,
+      normalMinutes: 5,
+      presets: [5, 10, 15, 30, 60],
+      rotationEnabled: true,
+      rotations: [10, 15, 30],
+      message: '',
+      theme: 'clean',
+    };
+    const themes = [
+      ['clean', '고요'], ['bold', '볼드'], ['mono', '모노'], ['classic', '클래식'],
+      ['outline', '아웃라인'], ['italic', '이탤릭'], ['digital', '디지털'],
+      ['led', '라운드 LED'], ['dots', '도트'], ['stencil', '스텐실'],
+      ['flip-dark', '플립 · 차콜'], ['flip-paper', '플립 · 크림'], ['flip-color', '플립 · 컬러'],
+      ['flip-sunset', '플립 · 선셋'], ['flip-aurora', '플립 · 오로라'],
+      ['watch-orange', '워치 · 오렌지'], ['watch-pastel', '워치 · 파스텔'],
+      ['watch-mosaic', '워치 · 모자이크'], ['watch-ribbon', '워치 · 리본'], ['watch-neon', '워치 · 네온믹스'],
+    ];
+    const watchFaces = {
+      'watch-orange': {
+        pattern: 'horizontal', background: ['#ff9563', '#c94906'], ink: ['#090b08', '#dbd9c5'],
+        layout: [[12, 24, 125, 182], [123, 20, 156, 132], [27, 214, 88, 88], [122, 150, 156, 150]],
+      },
+      'watch-mosaic': {
+        pattern: 'checker', background: ['#cde7ba', '#233e3d', '#e29d74', '#c8b3dc'], ink: ['#23453f', '#cde7ba', '#684839', '#443252'],
+        layout: [[18, 20, 130, 174], [155, 24, 124, 122], [26, 203, 108, 94], [150, 144, 128, 158]],
+      },
+      'watch-ribbon': {
+        pattern: 'diagonal', background: ['#eac7e8', '#ed876b', '#3c304a'], ink: ['#4d3156', '#452c3b', '#f6c58f'],
+        layout: [[16, 22, 102, 154], [128, 18, 148, 174], [24, 182, 92, 116], [128, 202, 148, 96]],
+      },
+      'watch-neon': {
+        pattern: 'vertical', background: ['#182b37', '#30223f', '#1c3940'], ink: ['#a9edff', '#f2bbe9', '#dbf2ae'],
+        layout: [[20, 18, 112, 142], [144, 18, 132, 198], [24, 164, 106, 138], [150, 226, 124, 76]],
+      },
+    };
+    const watchGlyphPaths = [
+      'M20 8H44Q56 8 56 20V76Q56 88 44 88H20Q8 88 8 76V20Q8 8 20 8Z',
+      'M10 26L34 8V88',
+      'M8 20Q8 8 20 8H44Q56 8 56 20V32Q56 42 44 46L20 54Q8 58 8 68V88H56',
+      'M8 8H44Q56 8 56 20V34Q56 48 42 48H22M42 48Q56 48 56 62V76Q56 88 44 88H8',
+      'M8 8V50H56M48 8V88',
+      'M56 8H8V46H42Q56 46 56 60V76Q56 88 44 88H8',
+      'M54 8H22Q8 8 8 22V76Q8 88 20 88H44Q56 88 56 76V60Q56 48 44 48H8',
+      'M8 8H56L24 88',
+      'M20 8H44Q56 8 56 20V34Q56 48 44 48H20Q8 48 8 34V20Q8 8 20 8ZM20 48H44Q56 48 56 62V76Q56 88 44 88H20Q8 88 8 76V62Q8 48 20 48Z',
+      'M56 48H20Q8 48 8 36V20Q8 8 20 8H44Q56 8 56 20V74Q56 88 42 88H10',
+    ];
+    const setup = document.getElementById('setup');
+    const duration = document.getElementById('duration');
+    const setupNote = document.getElementById('setup-note');
+    const setupHint = setupNote.textContent;
+    const start = document.getElementById('start');
+    const presets = document.getElementById('presets');
+    const summary = document.getElementById('rotation-summary');
+    const summaryTitle = document.getElementById('rotation-summary-title');
+    const summaryTimes = document.getElementById('summary-times');
+    const rotationReady = document.getElementById('rotation-ready');
+    const rotationConnectionStatus = document.getElementById('rotation-connection-status');
+    const focusView = document.getElementById('focus-view');
+    const focusStage = document.getElementById('focus-stage');
+    const sessionDuration = document.getElementById('session-duration');
+    const sessionAngle = document.getElementById('session-angle');
+    const fullscreenToggle = document.getElementById('fullscreen-toggle');
+    const focusTrigger = document.getElementById('focus-trigger');
+    const focusControls = document.getElementById('focus-controls');
+    const progress = document.getElementById('progress');
+    const pastelMarker = document.getElementById('pastel-marker');
+    const remaining = document.getElementById('remaining');
+    const phase = document.getElementById('phase');
+    const timeToggle = document.getElementById('time-toggle');
+    const numberDisplay = document.getElementById('number-display');
+    const minutesDisplay = document.getElementById('minutes-display');
+    const secondsDisplay = document.getElementById('seconds-display');
+    const watchComposition = document.getElementById('watch-composition');
+    const completion = document.getElementById('completion');
+    const completionParticles = document.getElementById('completion-particles');
+    const completionDetail = document.getElementById('completion-detail');
+    const toggle = document.getElementById('toggle');
+    const stop = document.getElementById('stop');
+    const slotTabs = document.getElementById('slot-tabs');
+    const screenLockStatus = document.getElementById('screen-lock-status');
+    const manager = document.getElementById('manager');
+    const presetEditor = document.getElementById('preset-editor');
+    const addPreset = document.getElementById('add-preset');
+    const rotationEnabled = document.getElementById('rotation-enabled');
+    const rotationFields = document.getElementById('rotation-fields');
+    const rotationInputs = [90, 180, 270].map((angle) => document.getElementById('rotation-' + angle));
+    const normalValue = document.getElementById('normal-value');
+    const managerMessage = document.getElementById('manager-message');
+    const sensorStatus = document.getElementById('sensor-status');
+    const sensorConnect = document.getElementById('sensor-connect');
+    const focusMessage = document.getElementById('focus-message');
+    const themeGrid = document.getElementById('theme-grid');
+    const labels = {
+      ready: { phase: '대기', action: '시작' },
+      running: { phase: '집중 중', action: '일시멈춤' },
+      paused: { phase: '일시멈춤', action: '계속하기' },
+      done: { phase: '시간 종료', action: '다시 시작' },
+    };
+
+    let settings = loadSettings();
+    let timers = [];
+    let activeIndex = 0;
+    let sessionActive = false;
+    let deadline = 0;
+    let interval;
+    let screenLock = null;
+    let screenLockRequest = null;
+    let screenBaseline = null;
+    let sensorBaseline = null;
+    let lastSensorQuarter = null;
+    let layoutPhysicalQuarter = null;
+    let lastSensorAt = -Infinity;
+    let sensorUsable = false;
+    let detectedIndex = 0;
+    let pendingIndex = null;
+    let rotationTimeout;
+    let sensorPermission = 'unknown';
+    let draftTheme = settings.theme;
+    let lastBeat = '';
+    let completionTimeout;
+    let completionUntil = 0;
+    let fullscreenPending = false;
+    let orientationLockOwned = false;
+    let fullscreenInitialized = false;
+    let watchFaceCounter = 0;
+    const slotButtons = [];
+    const slotReadouts = [];
+
+    function setText(element, text) {
+      if (element.textContent !== text) element.textContent = text;
+    }
+
+    function validMinutes(value) {
+      return Number.isInteger(value) && value >= 1 && value <= maxMinutes;
+    }
+
+    function readMinutes(value) {
+      const text = value.trim();
+      const minutes = /^[0-9]{1,3}$/.test(text) ? Number(text) : 0;
+      return validMinutes(minutes) ? minutes : 0;
+    }
+
+    function loadSettings() {
+      const fallback = { ...defaults, presets: [...defaults.presets], rotations: [...defaults.rotations] };
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        if (!saved || saved.version !== 1) return fallback;
+        if (!Array.isArray(saved.presets) || saved.presets.length < 1 || saved.presets.length > 10 ||
+            !saved.presets.every(validMinutes) || new Set(saved.presets).size !== saved.presets.length) return fallback;
+        if (!Array.isArray(saved.rotations) || saved.rotations.length !== 3 ||
+            !saved.rotations.every(validMinutes)) return fallback;
+        return {
+          version: 1,
+          normalMinutes: validMinutes(saved.normalMinutes) ? saved.normalMinutes : defaults.normalMinutes,
+          presets: saved.presets,
+          rotations: saved.rotations,
+          rotationEnabled: typeof saved.rotationEnabled === 'boolean' ? saved.rotationEnabled : true,
+          message: typeof saved.message === 'string' ? saved.message.slice(0, 80).trim() : '',
+          theme: themes.some(([id]) => id === saved.theme) ? saved.theme : defaults.theme,
+        };
+      } catch {
+        return fallback;
+      }
+    }
+
+    function persistSettings() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(settings));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function formatNumber(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function formatTime(milliseconds) {
+      const seconds = Math.ceil(milliseconds / 1000);
+      return formatNumber(Math.floor(seconds / 60)) + ':' + formatNumber(seconds % 60);
+    }
+
+    function svgNode(tag, attributes) {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, String(value));
+      return element;
+    }
+
+    function paintWatchPlanes(parent, pattern, colors) {
+      const planes = {
+        horizontal: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 166 },
+          { tag: 'rect', x: 0, y: 166, width: 300, height: 154 },
+        ],
+        checker: [
+          { tag: 'rect', x: 0, y: 0, width: 150, height: 166 },
+          { tag: 'rect', x: 150, y: 0, width: 150, height: 166 },
+          { tag: 'rect', x: 0, y: 166, width: 150, height: 154 },
+          { tag: 'rect', x: 150, y: 166, width: 150, height: 154 },
+        ],
+        diagonal: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 320 },
+          { tag: 'polygon', points: '0,0 300,0 300,75 0,210' },
+          { tag: 'polygon', points: '0,265 300,130 300,320 0,320' },
+        ],
+        vertical: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 320 },
+          { tag: 'rect', x: 146, y: 0, width: 154, height: 320 },
+          { tag: 'polygon', points: '0,235 300,185 300,320 0,320' },
+        ],
+      };
+      planes[pattern].forEach((plane, index) => {
+        const { tag, ...attributes } = plane;
+        parent.append(svgNode(tag, { ...attributes, fill: colors[index] }));
+      });
+    }
+
+    function renderWatchFace(host, minutes, seconds, theme, countdown = false) {
+      const key = theme + ':' + minutes + ':' + seconds + ':' + countdown;
+      if (host.dataset.faceKey === key) return;
+      host.dataset.faceKey = key;
+      if (!host.dataset.faceId) host.dataset.faceId = 'watch-face-' + (++watchFaceCounter);
+      const faceId = host.dataset.faceId;
+      const config = watchFaces[theme];
+      const svg = svgNode('svg', { viewBox: '0 0 300 320', class: 'watch-face-svg', 'aria-hidden': 'true' });
+      const defs = svgNode('defs', {});
+      const clip = svgNode('clipPath', { id: faceId + '-clip' });
+      clip.append(svgNode('rect', { x: 0, y: 0, width: 300, height: 320, rx: 60, fill: 'white' }));
+      const mask = svgNode('mask', { id: faceId + '-digits', maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: 300, height: 320 });
+      let text = minutes + seconds;
+      let layout = config.layout;
+      if (countdown) {
+        text = seconds;
+        layout = text.length === 1 ? [[60, 28, 180, 264]] : [[30, 38, 110, 244], [158, 30, 114, 260]];
+      } else if (minutes.length === 3) {
+        layout = [[16, 20, 74, 182], [91, 18, 76, 136], [169, 20, 110, 132], ...config.layout.slice(2)];
+      }
+      Array.from(text).forEach((digit, index) => {
+        const [x, y, width, height] = layout[index];
+        const placement = svgNode('g', {
+          transform: 'translate(' + x + ' ' + y + ') scale(' + width / 64 + ' ' + height / 96 + ')',
+          'data-position': index,
+        });
+        placement.append(svgNode('path', {
+          d: watchGlyphPaths[Number(digit)], fill: 'none', stroke: 'white', 'stroke-width': 8,
+          'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        }));
+        mask.append(placement);
+      });
+      defs.append(clip, mask);
+      svg.append(defs);
+      const face = svgNode('g', { 'clip-path': 'url(#' + faceId + '-clip)' });
+      paintWatchPlanes(face, config.pattern, config.background);
+      const digits = svgNode('g', { mask: 'url(#' + faceId + '-digits)' });
+      // Shared color planes cross every digit, including the tall upper and lower numerals.
+      paintWatchPlanes(digits, config.pattern, config.ink);
+      face.append(digits, svgNode('rect', { x: 1, y: 1, width: 298, height: 318, rx: 59, fill: 'none', stroke: '#ffffff35', 'stroke-width': 1 }));
+      svg.append(face);
+      host.replaceChildren(svg);
+    }
+
+    function renderDigits(container, text, theme) {
+      const key = theme + ':' + text;
+      const previousKey = container.dataset.digits || '';
+      if (previousKey === key) return;
+      container.dataset.digits = key;
+      container.dataset.length = String(text.length);
+      if (theme.startsWith('flip-')) {
+        const previous = previousKey.startsWith(theme + ':') ? previousKey.slice(theme.length + 1) : null;
+        renderFlipDigits(container, text, previous);
+        return;
+      }
+      if (!['digital', 'led', 'dots'].includes(theme)) {
+        const numeral = document.createElement('span');
+        numeral.className = 'numeral';
+        numeral.textContent = text;
+        container.replaceChildren(numeral);
+        return;
+      }
+      const segments = ['abcdef', 'bc', 'abdeg', 'abcdg', 'bcfg', 'acdfg', 'acdefg', 'abc', 'abcdefg', 'abcdfg'];
+      const paths = {
+        a: 'M8 5H32', b: 'M35 10V30', c: 'M35 40V60', d: 'M8 65H32',
+        e: 'M5 40V60', f: 'M5 10V30', g: 'M8 35H32',
+      };
+      const dotPatterns = [
+        ['01110','10001','10011','10101','11001','10001','01110'],
+        ['00100','01100','00100','00100','00100','00100','01110'],
+        ['01110','10001','00001','00010','00100','01000','11111'],
+        ['11110','00001','00001','01110','00001','00001','11110'],
+        ['00010','00110','01010','10010','11111','00010','00010'],
+        ['11111','10000','10000','11110','00001','00001','11110'],
+        ['01110','10000','10000','11110','10001','10001','01110'],
+        ['11111','00001','00010','00100','01000','01000','01000'],
+        ['01110','10001','10001','01110','10001','10001','01110'],
+        ['01110','10001','10001','01111','00001','00001','01110'],
+      ];
+      const digits = Array.from(text, (character) => {
+        const svg = svgNode('svg', { viewBox: theme === 'dots' ? '0 0 40 56' : '0 0 40 70', class: 'digit-svg' });
+        if (theme === 'dots') {
+          dotPatterns[Number(character)].forEach((row, y) => {
+            Array.from(row).forEach((dot, x) => {
+              if (dot === '1') svg.append(svgNode('circle', { cx: 4 + x * 8, cy: 4 + y * 8, r: 2.5 }));
+            });
+          });
+        } else {
+          for (const segment of segments[Number(character)]) {
+            svg.append(svgNode('path', {
+              d: paths[segment], fill: 'none', stroke: 'currentColor',
+              'stroke-width': theme === 'led' ? 8 : 6,
+              'stroke-linecap': theme === 'led' ? 'round' : 'butt',
+            }));
+          }
+        }
+        return svg;
+      });
+      container.replaceChildren(...digits);
+    }
+
+    function cardFace(value, className) {
+      const face = document.createElement('span');
+      face.className = 'card-face ' + className;
+      const glyph = document.createElement('span');
+      glyph.className = 'card-glyph';
+      glyph.textContent = value;
+      face.append(glyph);
+      return face;
+    }
+
+    function renderFlipDigits(container, text, previous) {
+      const reuse = previous !== null && previous.length === text.length;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const cards = Array.from(text, (value, index) => {
+        const card = reuse ? container.children[index] : document.createElement('span');
+        if (reuse && previous[index] === value) return card;
+        card.className = 'flip-digit';
+        card.style.setProperty('--card-hue', String(Number(value) * 34 + index * 19));
+        card.replaceChildren(cardFace(value, 'card-upper'), cardFace(value, 'card-lower'));
+        if (reuse && !reducedMotion) {
+          const outgoing = cardFace(previous[index], 'card-upper card-outgoing');
+          const incoming = cardFace(value, 'card-lower card-incoming');
+          for (const flap of [outgoing, incoming]) {
+            flap.addEventListener('animationend', () => flap.remove(), { once: true });
+          }
+          card.append(outgoing, incoming);
+        }
+        return card;
+      });
+      // Keep existing cards mounted so only changing digits fold over.
+      if (!reuse) container.replaceChildren(...cards);
+    }
+
+    function renderThemeChoices() {
+      const cards = themes.map(([id, name]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-card';
+        button.setAttribute('aria-label', name + ' 숫자 테마');
+        button.setAttribute('aria-pressed', String(id === draftTheme));
+        const preview = document.createElement('span');
+        preview.className = 'number-display theme-preview';
+        preview.dataset.theme = id;
+        preview.setAttribute('aria-hidden', 'true');
+        if (watchFaces[id]) {
+          preview.dataset.layout = 'composition';
+          const host = document.createElement('span');
+          host.className = 'watch-composition';
+          renderWatchFace(host, '10', '09', id);
+          preview.append(host);
+        } else {
+          const first = document.createElement('span');
+          const last = document.createElement('span');
+          first.className = last.className = 'number-group';
+          const colon = document.createElement('span');
+          colon.className = 'number-colon';
+          renderDigits(first, '12', id);
+          renderDigits(last, '34', id);
+          preview.append(first, colon, last);
+        }
+        const label = document.createElement('span');
+        label.textContent = name;
+        button.append(preview, label);
+        button.addEventListener('click', () => {
+          draftTheme = id;
+          for (const [index, card] of Array.from(themeGrid.children).entries()) {
+            card.setAttribute('aria-pressed', String(themes[index][0] === id));
+          }
+        });
+        return button;
+      });
+      themeGrid.replaceChildren(...cards);
+    }
+
+    function renderPresets() {
+      const buttons = settings.presets.map((minutes) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'preset';
+        button.dataset.minutes = String(minutes);
+        button.textContent = minutes + '분';
+        button.addEventListener('click', () => {
+          duration.value = formatNumber(minutes);
+          refreshDuration();
+        });
+        return button;
+      });
+      presets.replaceChildren(...buttons);
+    }
+
+    function renderSummary() {
+      setText(summaryTitle, settings.rotationEnabled ? '회전으로 네 개의 타이머 전환' : '회전 전환 꺼짐 · 눌러서 관리');
+      summaryTimes.hidden = !settings.rotationEnabled;
+      rotationReady.hidden = !settings.rotationEnabled;
+      updateSensorConnectionStatus();
+      const minutes = [readMinutes(duration.value) || settings.normalMinutes, ...settings.rotations];
+      const items = minutes.map((value, index) => {
+        const item = document.createElement('span');
+        item.textContent = index * 90 + '° ' + value + '분';
+        return item;
+      });
+      summaryTimes.replaceChildren(...items);
+    }
+
+    function refreshDuration() {
+      const minutes = readMinutes(duration.value);
+      for (const preset of presets.children) {
+        preset.setAttribute('aria-pressed', String(Number(preset.dataset.minutes) === minutes));
+      }
+      duration.removeAttribute('aria-invalid');
+      setupNote.removeAttribute('data-error');
+      setText(setupNote, setupHint);
+      renderSummary();
+    }
+
+    function setControls(visible) {
+      focusControls.hidden = !visible;
+      focusTrigger.setAttribute('aria-expanded', String(visible));
+      focusTrigger.setAttribute('aria-label', visible ? '조작 버튼 숨기기' : '조작 버튼 보기');
+    }
+
+    function renderTime() {
+      if (!sessionActive) {
+        document.title = '집중 타이머';
+        return;
+      }
+      const timer = timers[activeIndex];
+      const time = formatTime(timer.remainingMs);
+      const totalSeconds = Math.ceil(timer.remainingMs / 1000);
+      const elapsed = 1 - timer.remainingMs / timer.totalMs;
+      focusView.dataset.theme = settings.theme;
+      progress.style.strokeDashoffset = -100 * elapsed;
+      if (settings.theme === 'watch-pastel') {
+        const angle = elapsed * 2 * Math.PI;
+        pastelMarker.setAttribute('cx', String(120 - 101 * Math.sin(angle)));
+        pastelMarker.setAttribute('cy', String(120 - 101 * Math.cos(angle)));
+      }
+      const colors = ['#bc9af7', '#f2d46d', '#83daa2', '#f38c8c'];
+      focusStage.style.setProperty('--stage-color', colors[Math.min(3, Math.floor(elapsed * 4))]);
+      let urgency = 'normal';
+      if (timer.remainingMs > 0 && timer.remainingMs <= 60000) urgency = 'rainbow';
+      if (timer.remainingMs > 0 && timer.remainingMs <= 10000) urgency = 'countdown';
+      focusView.dataset.urgency = urgency;
+      numberDisplay.dataset.theme = settings.theme;
+      const composed = Boolean(watchFaces[settings.theme]);
+      focusView.dataset.composed = String(composed);
+      numberDisplay.dataset.layout = composed ? 'composition' : 'standard';
+      watchComposition.hidden = !composed;
+      const minutes = formatNumber(Math.floor(totalSeconds / 60));
+      const seconds = urgency === 'countdown' ? String(totalSeconds) : formatNumber(totalSeconds % 60);
+      if (composed) renderWatchFace(watchComposition, minutes, seconds, settings.theme, urgency === 'countdown');
+      else {
+        renderDigits(minutesDisplay, minutes, settings.theme);
+        renderDigits(secondsDisplay, seconds, settings.theme);
+      }
+      if (remaining.dataset.time !== time) {
+        remaining.dataset.time = time;
+        remaining.setAttribute('aria-label', '남은 시간 ' + Math.floor(totalSeconds / 60) + '분 ' + totalSeconds % 60 + '초');
+      }
+      const beat = activeIndex + ':' + totalSeconds + ':' + timer.state;
+      if (beat !== lastBeat && urgency === 'countdown' && timer.state === 'running' &&
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        numberDisplay.animate?.([
+          { transform: 'scale(1.12)', opacity: .75 },
+          { transform: 'scale(1)', opacity: 1 },
+        ], { duration: 650, easing: 'cubic-bezier(.16, 1, .3, 1)' });
+      }
+      lastBeat = beat;
+      const title = timer.state === 'done' ? '시간 종료 · 집중 타이머' : time + ' · ' + labels[timer.state].phase;
+      if (document.title !== title) document.title = title;
+
+      for (let index = 0; index < timers.length; index++) {
+        const stored = timers[index];
+        setText(slotReadouts[index], formatTime(stored.remainingMs));
+        slotButtons[index].setAttribute('aria-pressed', String(index === activeIndex));
+        slotButtons[index].setAttribute('aria-label',
+          index * 90 + '도 타이머, ' + formatTime(stored.remainingMs) + ', ' + labels[stored.state].phase);
+      }
+    }
+
+    function render() {
+      if (sessionActive) {
+        const timer = timers[activeIndex];
+        focusView.dataset.state = timer.state;
+        setText(phase, timer.state === 'running' ? settings.message : labels[timer.state].phase);
+        setText(toggle, labels[timer.state].action);
+        setText(stop, timer.state === 'done' ? '시간 설정' : '정지');
+        setText(sessionDuration, timer.totalMs / minuteMs + '분 타이머');
+        setText(sessionAngle, activeIndex === 0 ? '일반 · 0°' : activeIndex * 90 + '°');
+        timeToggle.setAttribute('aria-label', timer.state === 'running' ? '타이머 일시정지' : '타이머 계속 실행');
+        slotTabs.hidden = !settings.rotationEnabled;
+      }
+      renderTime();
+      updateScreenLock();
+    }
+
+    function syncTimer() {
+      const timer = timers[activeIndex];
+      if (!sessionActive || timer.state !== 'running') return;
+      timer.remainingMs = Math.min(timer.remainingMs, Math.max(0, deadline - Date.now()));
+      if (timer.remainingMs === 0) {
+        timer.state = 'done';
+        clearInterval(interval);
+      }
+    }
+
+    function tick() {
+      if (!sessionActive || timers[activeIndex].state !== 'running') return;
+      syncTimer();
+      if (timers[activeIndex].state === 'done') {
+        setControls(true);
+        render();
+        showCompletion(deadline + 10000);
+      } else {
+        renderTime();
+      }
+    }
+
+    function startActiveTimer() {
+      clearInterval(interval);
+      dismissCompletion();
+      const timer = timers[activeIndex];
+      deadline = Date.now() + timer.remainingMs;
+      timer.state = 'running';
+      interval = setInterval(tick, 200);
+      setControls(false);
+      focusTrigger.focus();
+      render();
+    }
+
+    function switchTimer(index) {
+      if (!sessionActive || !settings.rotationEnabled || index === activeIndex) return;
+      dismissCompletion();
+      syncTimer();
+      clearInterval(interval);
+      if (timers[activeIndex].state === 'running') timers[activeIndex].state = 'paused';
+      activeIndex = index;
+      if (timers[index].state === 'done') {
+        setControls(true);
+        render();
+      } else {
+        startActiveTimer();
+      }
+    }
+
+    function startSession(index = 0, preserveBaseline = false) {
+      if (sessionActive) return;
+      const minutes = readMinutes(duration.value);
+      if (!minutes) {
+        duration.setAttribute('aria-invalid', 'true');
+        setupNote.setAttribute('data-error', '');
+        setText(setupNote, '1분부터 120분 사이의 시간을 입력하세요.');
+        duration.focus();
+        return;
+      }
+
+      settings.normalMinutes = minutes;
+      persistSettings();
+      duration.value = formatNumber(minutes);
+      refreshDuration();
+      // These four objects are reused throughout the session. Rotation never creates a timer.
+      timers = [minutes, ...settings.rotations].map((value) => ({
+        totalMs: value * minuteMs,
+        remainingMs: value * minuteMs,
+        state: 'ready',
+      }));
+      if (!preserveBaseline) resetRotationBaseline();
+      activeIndex = index;
+      detectedIndex = index;
+      cancelPendingRotation();
+      sessionActive = true;
+      setup.hidden = true;
+      focusView.hidden = false;
+      updateFocusLayout();
+      startActiveTimer();
+      if (!preserveBaseline) connectSensors();
+      enterFullscreen();
+    }
+
+    function dismissCompletion() {
+      clearTimeout(completionTimeout);
+      completionUntil = 0;
+      completion.hidden = true;
+    }
+
+    function showCompletion(until) {
+      dismissCompletion();
+      const remaining = until - Date.now();
+      if (remaining <= 0) return;
+      completionUntil = until;
+      setText(completionDetail, timers[activeIndex].totalMs / minuteMs + '분 타이머가 끝났어요');
+      completion.hidden = document.visibilityState !== 'visible';
+      if (!completion.hidden) completion.focus();
+      completionTimeout = setTimeout(() => {
+        dismissCompletion();
+        focusTrigger.focus();
+      }, remaining);
+    }
+
+    function updateFocusLayout() {
+      if (!sessionActive) return;
+      const screenQuarter = readScreenQuarter() ?? 0;
+      const physicalQuarter = layoutPhysicalQuarter ?? screenQuarter;
+      const correction = normalizeQuarter(screenQuarter - physicalQuarter);
+      const width = focusView.clientWidth || window.innerWidth;
+      const height = focusView.clientHeight || window.innerHeight;
+      const swapped = correction % 2 === 1;
+      const stageWidth = swapped ? height : width;
+      const stageHeight = swapped ? width : height;
+      focusStage.style.width = stageWidth + 'px';
+      focusStage.style.height = stageHeight + 'px';
+      focusStage.style.setProperty('--ui-rotation', correction * 90 + 'deg');
+      focusStage.style.setProperty('--dial-size', Math.min(stageWidth * .85, stageHeight * .8, 760) + 'px');
+      focusStage.style.setProperty('--alarm-size', Math.min(stageWidth * .54, stageHeight * .38, 240) + 'px');
+      focusStage.dataset.compact = String(stageWidth >= 520 && stageHeight <= 460);
+    }
+
+    function appIsFullscreen() {
+      const element = document.fullscreenElement || document.webkitFullscreenElement;
+      return element === document.documentElement || element === focusView;
+    }
+
+    async function enterFullscreen() {
+      if (fullscreenPending || appIsFullscreen()) return;
+      const target = document.documentElement;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen;
+      if (!request) return;
+      fullscreenPending = true;
+      try {
+        await request.call(target, { navigationUI: 'hide' });
+        fullscreenInitialized = true;
+        // Allow the browser to use all four orientations before applying our HTML fallback.
+        if (window.screen?.orientation?.lock) {
+          try {
+            await window.screen.orientation.lock('any');
+            orientationLockOwned = true;
+            if (!appIsFullscreen()) {
+              window.screen.orientation.unlock();
+              orientationLockOwned = false;
+            }
+          } catch {}
+        }
+      } catch {
+        // The viewport-sized timer remains usable when fullscreen is unavailable.
+      } finally {
+        fullscreenPending = false;
+        updateFocusLayout();
+      }
+    }
+
+    function leaveFullscreen() {
+      if (orientationLockOwned) {
+        window.screen.orientation.unlock();
+        orientationLockOwned = false;
+      }
+      if (!appIsFullscreen()) return;
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+    }
+
+    async function updateScreenLock() {
+      if (!sessionActive || timers[activeIndex].state !== 'running' || document.visibilityState !== 'visible') {
+        screenLockRequest = null;
+        const lock = screenLock;
+        screenLock = null;
+        setText(screenLockStatus, '');
+        if (lock) await lock.release();
+        return;
+      }
+      if (!navigator.wakeLock) {
+        setText(screenLockStatus, '이 환경에서는 화면 켜짐 유지를 지원하지 않아요.');
+        return;
+      }
+      if (screenLockRequest || (screenLock && !screenLock.released)) return;
+
+      const request = navigator.wakeLock.request('screen');
+      screenLockRequest = request;
+      try {
+        const lock = await request;
+        if (screenLockRequest !== request || document.visibilityState !== 'visible') {
+          await lock.release();
+          return;
+        }
+        if (lock.released) {
+          setText(screenLockStatus, '화면 켜짐 유지가 해제됐어요.');
+          return;
+        }
+        screenLock = lock;
+        setText(screenLockStatus, '화면 켜짐 유지 중');
+        lock.addEventListener('release', () => {
+          if (screenLock !== lock) return;
+          screenLock = null;
+          setText(screenLockStatus, '화면 켜짐 유지가 해제됐어요.');
+        }, { once: true });
+      } catch {
+        if (screenLockRequest === request) setText(screenLockStatus, '화면 켜짐 유지가 적용되지 않았어요.');
+      } finally {
+        if (screenLockRequest === request) screenLockRequest = null;
+      }
+    }
+
+    function presetDraft() {
+      return Array.from(presetEditor.querySelectorAll('input'), (input) => input.value);
+    }
+
+    function renderPresetEditor(values) {
+      const rows = values.map((value, index) => {
+        const row = document.createElement('div');
+        row.className = 'preset-row';
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.enterKeyHint = 'done';
+        input.maxLength = 3;
+        input.value = String(value);
+        input.setAttribute('aria-label', '시간 버튼 ' + (index + 1) + '의 분');
+        label.append(input, document.createTextNode('분'));
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove-preset';
+        remove.textContent = '×';
+        remove.disabled = values.length === 1;
+        remove.setAttribute('aria-label', '시간 버튼 ' + (index + 1) + ' 삭제');
+        remove.addEventListener('click', () => {
+          renderPresetEditor(presetDraft().filter((_, current) => current !== index));
+          addPreset.focus();
+        });
+        row.append(label, remove);
+        return row;
+      });
+      presetEditor.replaceChildren(...rows);
+      addPreset.disabled = values.length >= 10;
+    }
+
+    function updateRotationFields() {
+      rotationFields.disabled = !rotationEnabled.checked;
+      sensorConnect.disabled = !rotationEnabled.checked || sensorPermission === 'requesting';
+      updateSensorStatus();
+    }
+
+    function openManager() {
+      cancelPendingRotation();
+      focusMessage.value = settings.message;
+      draftTheme = settings.theme;
+      renderThemeChoices();
+      renderPresetEditor(settings.presets);
+      rotationEnabled.checked = settings.rotationEnabled;
+      rotationInputs.forEach((input, index) => {
+        input.value = String(settings.rotations[index]);
+        input.removeAttribute('aria-invalid');
+      });
+      const minutes = readMinutes(duration.value) || settings.normalMinutes;
+      setText(normalValue, minutes + '분 · 첫 화면에서 설정');
+      managerMessage.textContent = '';
+      managerMessage.removeAttribute('data-error');
+      updateRotationFields();
+      manager.showModal();
+    }
+
+    function managerError(input, message) {
+      managerMessage.setAttribute('data-error', '');
+      setText(managerMessage, message);
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+      input.select();
+    }
+
+    function saveManager() {
+      const presetInputs = Array.from(presetEditor.querySelectorAll('input'));
+      const newPresets = presetInputs.map((input) => readMinutes(input.value));
+      const invalidPreset = newPresets.indexOf(0);
+      if (invalidPreset !== -1) {
+        managerError(presetInputs[invalidPreset], '시간 버튼은 1분부터 120분 사이로 입력하세요.');
+        return;
+      }
+      const duplicate = newPresets.findIndex((value, index) => newPresets.indexOf(value) !== index);
+      if (duplicate !== -1) {
+        managerError(presetInputs[duplicate], '같은 시간의 버튼이 있어요. 다른 시간을 입력하세요.');
+        return;
+      }
+      let rotations = settings.rotations;
+      if (rotationEnabled.checked) {
+        rotations = rotationInputs.map((input) => readMinutes(input.value));
+        const invalidRotation = rotations.indexOf(0);
+        if (invalidRotation !== -1) {
+          managerError(rotationInputs[invalidRotation], '각도별 시간은 1분부터 120분 사이로 입력하세요.');
+          return;
+        }
+      }
+      settings = {
+        version: 1,
+        presets: newPresets,
+        normalMinutes: readMinutes(duration.value) || settings.normalMinutes,
+        rotationEnabled: rotationEnabled.checked,
+        rotations,
+        message: focusMessage.value.slice(0, 80).trim(),
+        theme: draftTheme,
+      };
+      const saved = persistSettings();
+      renderPresets();
+      refreshDuration();
+      setText(setupNote, saved ? '설정을 저장했어요.' : '설정을 적용했어요. 이 환경에서는 다시 열면 설정이 초기화될 수 있어요.');
+      manager.close();
+    }
+
+    function normalizeQuarter(quarter) {
+      return ((Math.round(quarter) % 4) + 4) % 4;
+    }
+
+    function readScreenQuarter() {
+      let angle = window.screen?.orientation?.angle;
+      if (!Number.isFinite(angle)) angle = window.orientation;
+      // Screen Orientation angles run counter-clockwise. Our angle labels run clockwise.
+      return Number.isFinite(angle) ? normalizeQuarter(-angle / 90) : null;
+    }
+
+    function cancelPendingRotation() {
+      clearTimeout(rotationTimeout);
+      pendingIndex = null;
+    }
+
+    function resetRotationBaseline() {
+      cancelPendingRotation();
+      screenBaseline = readScreenQuarter();
+      sensorBaseline = sensorUsable && Date.now() - lastSensorAt < 2000 ? lastSensorQuarter : null;
+      detectedIndex = 0;
+    }
+
+    function queueRotation(index) {
+      if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible') return;
+      if (index === detectedIndex) {
+        cancelPendingRotation();
+        return;
+      }
+      if (pendingIndex === index) return;
+      cancelPendingRotation();
+      pendingIndex = index;
+      // Keep the fullscreen request in the orientation event, before the settling timeout.
+      enterFullscreen();
+      // Wait for a settled position so passing through an angle does not start its timer.
+      rotationTimeout = setTimeout(() => {
+        pendingIndex = null;
+        if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible') return;
+        detectedIndex = index;
+        if (sessionActive) {
+          switchTimer(index);
+        } else {
+          startSession(index, true);
+        }
+      }, 300);
+    }
+
+    function onScreenChange(event) {
+      if (event && (!sensorUsable || Date.now() - lastSensorAt >= 1500)) {
+        layoutPhysicalQuarter = readScreenQuarter();
+      }
+      updateFocusLayout();
+      if (manager.open || !settings.rotationEnabled) return;
+      if (sensorUsable && Date.now() - lastSensorAt < 1500) return;
+      const quarter = readScreenQuarter();
+      if (quarter !== null && screenBaseline !== null) {
+        queueRotation(normalizeQuarter(quarter - screenBaseline));
+      }
+    }
+
+    function onDeviceOrientation(event) {
+      if (document.visibilityState !== 'visible') return;
+      if (!Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
+      const beta = event.beta * Math.PI / 180;
+      const gamma = event.gamma * Math.PI / 180;
+      // Project the vertical axis into the device plane using the W3C Z-X-Y rotation matrix.
+      const x = Math.cos(beta) * Math.sin(gamma);
+      const y = Math.sin(beta);
+      sensorUsable = Math.hypot(x, y) >= .55;
+      if (!sensorUsable) {
+        onScreenChange();
+        if (manager.open) updateSensorStatus();
+        return;
+      }
+      const angle = Math.atan2(x, y) * 180 / Math.PI;
+      const quarter = normalizeQuarter(angle / 90);
+      const distance = Math.abs(((angle - quarter * 90 + 540) % 360) - 180);
+      if (distance > 25) {
+        cancelPendingRotation();
+        return;
+      }
+      lastSensorQuarter = quarter;
+      layoutPhysicalQuarter = quarter;
+      lastSensorAt = Date.now();
+      updateFocusLayout();
+      if (manager.open) updateSensorStatus();
+      if (manager.open || !settings.rotationEnabled) return;
+      if (sensorBaseline === null) {
+        const screenQuarter = readScreenQuarter();
+        const screenDelta = screenQuarter !== null && screenBaseline !== null ?
+          normalizeQuarter(screenQuarter - screenBaseline) : 0;
+        sensorBaseline = normalizeQuarter(quarter - screenDelta);
+      }
+      queueRotation(normalizeQuarter(quarter - sensorBaseline));
+    }
+
+    function updateSensorStatus() {
+      let message = '휴대폰을 세워 돌려보세요. 감지가 안 되면 집중 화면의 각도 버튼으로 전환할 수 있어요.';
+      if (!rotationEnabled.checked) {
+        message = '회전 전환을 켜면 각도별 타이머를 사용할 수 있어요.';
+      } else if (sensorPermission === 'requesting') {
+        message = '회전 센서 권한을 확인하고 있어요.';
+      } else if (sensorPermission === 'waiting') {
+        message = '자동 연결 대기 중 · 화면을 처음 터치하면 센서 권한을 확인합니다.';
+      } else if (sensorPermission === 'denied') {
+        message = '센서 권한이 꺼져 있어요. 화면 방향 또는 집중 화면의 각도 버튼으로 전환할 수 있어요.';
+      } else if (!window.isSecureContext) {
+        message = '센서 감지는 HTTPS에서 지원돼요. 집중 화면의 각도 버튼으로도 전환할 수 있어요.';
+      } else if (sensorUsable && Date.now() - lastSensorAt < 2000) {
+        message = '회전 감지 중 · 대기할 때의 방향을 0°로 기억합니다.';
+      }
+      setText(sensorStatus, message);
+      updateSensorConnectionStatus();
+    }
+
+    function updateSensorConnectionStatus() {
+      const needsPermission = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
+      rotationConnectionStatus.hidden = !settings.rotationEnabled || !needsPermission || sensorPermission === 'granted';
+      let text = '자동 연결 대기 · 첫 터치에서 센서 권한을 확인해요.';
+      if (sensorPermission === 'requesting') text = '회전 감지 자동 연결 중';
+      if (sensorPermission === 'denied') text = '센서 권한을 허용하면 회전 감지를 사용할 수 있어요.';
+      setText(rotationConnectionStatus, text);
+    }
+
+    async function connectSensors(retry = false) {
+      const api = window.DeviceOrientationEvent;
+      if (sensorPermission === 'requesting') return;
+      if (typeof api?.requestPermission !== 'function') {
+        updateSensorStatus();
+        return;
+      }
+      if (!retry && !['unknown', 'waiting'].includes(sensorPermission)) return;
+      const hasActivation = navigator.userActivation?.isActive === true;
+      sensorPermission = 'requesting';
+      updateRotationFields();
+      try {
+        sensorPermission = await api.requestPermission();
+      } catch {
+        sensorPermission = hasActivation ? 'denied' : 'waiting';
+      }
+      updateRotationFields();
+    }
+
+    for (let index = 0; index < 4; index++) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'slot-tab';
+      const label = document.createElement('span');
+      label.textContent = index === 0 ? '일반 0°' : index * 90 + '°';
+      const readout = document.createElement('span');
+      button.append(label, readout);
+      button.addEventListener('click', () => {
+        if (pendingIndex !== null) detectedIndex = pendingIndex;
+        cancelPendingRotation();
+        switchTimer(index);
+      });
+      slotButtons.push(button);
+      slotReadouts.push(readout);
+      slotTabs.append(button);
+    }
+
+    start.addEventListener('click', () => startSession());
+    duration.addEventListener('focus', () => duration.select());
+    duration.addEventListener('click', () => duration.select());
+    duration.addEventListener('input', refreshDuration);
+    duration.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        duration.blur();
+      }
+    });
+
+    focusTrigger.addEventListener('click', () => setControls(focusControls.hidden));
+    function toggleTimer() {
+      if (!sessionActive) return;
+      if (!completion.hidden) {
+        dismissCompletion();
+        return;
+      }
+      const timer = timers[activeIndex];
+      if (timer.state === 'running') {
+        syncTimer();
+        if (timer.state === 'done') {
+          setControls(true);
+          render();
+          showCompletion(deadline + 10000);
+          return;
+        }
+        clearInterval(interval);
+        timer.state = 'paused';
+        setControls(true);
+        render();
+      } else {
+        if (timer.state === 'done') timer.remainingMs = timer.totalMs;
+        startActiveTimer();
+      }
+    }
+    toggle.addEventListener('click', toggleTimer);
+    timeToggle.addEventListener('click', toggleTimer);
+    completion.addEventListener('click', () => {
+      dismissCompletion();
+      focusTrigger.focus();
+    });
+    fullscreenToggle.addEventListener('click', () => {
+      if (appIsFullscreen()) leaveFullscreen();
+      else {
+        connectSensors();
+        enterFullscreen();
+      }
+    });
+
+    stop.addEventListener('click', () => {
+      clearInterval(interval);
+      cancelPendingRotation();
+      dismissCompletion();
+      sessionActive = false;
+      timers = [];
+      activeIndex = 0;
+      resetRotationBaseline();
+      focusView.hidden = true;
+      setup.hidden = false;
+      setControls(false);
+      render();
+      start.focus();
+    });
+
+    document.getElementById('open-manager').addEventListener('click', openManager);
+    summary.addEventListener('click', openManager);
+    document.getElementById('close-manager').addEventListener('click', () => manager.close());
+    document.getElementById('cancel-manager').addEventListener('click', () => manager.close());
+    document.getElementById('save-manager').addEventListener('click', saveManager);
+    addPreset.addEventListener('click', () => {
+      const values = presetDraft();
+      if (values.length >= 10) return;
+      renderPresetEditor([...values, '']);
+      const inputs = presetEditor.querySelectorAll('input');
+      inputs[inputs.length - 1].focus();
+    });
+    rotationEnabled.addEventListener('change', updateRotationFields);
+    sensorConnect.addEventListener('click', () => connectSensors(true));
+    manager.addEventListener('close', () => {
+      if (!sessionActive) resetRotationBaseline();
+    });
+    manager.addEventListener('input', (event) => {
+      event.target.removeAttribute('aria-invalid');
+      managerMessage.textContent = '';
+      managerMessage.removeAttribute('data-error');
+    });
+    manager.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+        event.preventDefault();
+        event.target.blur();
+      }
+    });
+
+    window.addEventListener('deviceorientation', onDeviceOrientation);
+    window.addEventListener('orientationchange', onScreenChange);
+    window.addEventListener('resize', updateFocusLayout);
+    window.visualViewport?.addEventListener('resize', updateFocusLayout);
+    window.screen?.orientation?.addEventListener('change', onScreenChange);
+    // A permitted first gesture prepares fullscreen while the timer is still waiting for rotation.
+    document.addEventListener('click', (event) => {
+      connectSensors();
+      if (fullscreenInitialized) return;
+      if (!event.target.closest?.('#fullscreen-toggle')) enterFullscreen();
+    }, { capture: true });
+    function onFullscreenChange() {
+      const active = appIsFullscreen();
+      fullscreenToggle.setAttribute('aria-label', active ? '전체 화면 나가기' : '전체 화면으로 보기');
+      if (!active && orientationLockOwned) {
+        window.screen.orientation.unlock();
+        orientationLockOwned = false;
+      }
+      updateFocusLayout();
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.addEventListener('visibilitychange', () => {
+      tick();
+      updateScreenLock();
+      if (document.visibilityState === 'hidden') {
+        cancelPendingRotation();
+        if (!sessionActive) sensorUsable = false;
+      }
+      else {
+        if (completionUntil) showCompletion(completionUntil);
+        if (sessionActive) onScreenChange();
+        else resetRotationBaseline();
+      }
+    });
+
+    const celebrationColors = ['#9af1ff', '#c1b0ff', '#ffb2d5', '#ffe39b', '#a7efcc', '#89baff'];
+    for (let index = 0; index < 48; index++) {
+      const particle = document.createElement('i');
+      particle.className = index % 3 === 0 ? 'spark' : 'confetti';
+      const angle = index * 137.508 * Math.PI / 180;
+      particle.style.setProperty('--dx', String(Math.cos(angle) * (1 + index % 4 * .14)));
+      particle.style.setProperty('--dy', String(Math.sin(angle) * (1 + index % 4 * .14)));
+      particle.style.setProperty('--spark-color', celebrationColors[index % celebrationColors.length]);
+      particle.style.setProperty('--size', 5 + index % 5 * 2 + 'px');
+      particle.style.setProperty('--duration', 2.7 + index % 5 * .16 + 's');
+      particle.style.setProperty('--delay', -(index % 9) * .33 + 's');
+      particle.style.setProperty('--twist', index % 2 === 0 ? '190deg' : '-160deg');
+      completionParticles.append(particle);
+    }
+
+    duration.value = formatNumber(settings.normalMinutes);
+    resetRotationBaseline();
+    renderPresets();
+    refreshDuration();
+    connectSensors();
+    enterFullscreen();
+  </script>
+</body>
+</html>
+
