@@ -190,9 +190,41 @@
       background: radial-gradient(circle at center, #151e19, #0a0e0c 72%);
     }
 
+    .focus-view:fullscreen { width: 100%; height: 100%; }
+    .focus-view:-webkit-full-screen { width: 100%; height: 100%; }
+
+    .focus-stage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 100%;
+      height: 100%;
+      place-items: center;
+      transform: translate(-50%, -50%) rotate(var(--ui-rotation, 0deg));
+      --stage-color: #bc9af7;
+    }
+
+    .session-label {
+      position: absolute;
+      z-index: 3;
+      top: max(18px, env(safe-area-inset-top), env(safe-area-inset-bottom));
+      left: max(18px, env(safe-area-inset-left), env(safe-area-inset-right));
+      display: grid;
+      gap: 5px;
+      pointer-events: none;
+    }
+
+    .session-label strong { color: var(--stage-color); font-size: .95rem; font-weight: 650; }
+    .session-label span { color: var(--muted); font-size: .73rem; }
+    .fullscreen-button { position: absolute; z-index: 3; top: max(14px, env(safe-area-inset-top), env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right), env(safe-area-inset-left)); opacity: .65; }
+    .fullscreen-button:hover, .fullscreen-button:focus-visible { opacity: 1; }
+
     .focus-dial {
       width: min(85vw, 80vh, 760px);
-      width: min(85vw, 80dvh, 760px);
+      width: var(--dial-size, min(85vw, 80dvh, 760px));
+      z-index: 2;
+      pointer-events: none;
     }
 
     .focus-dial .track { stroke-width: 3; }
@@ -200,16 +232,23 @@
     .focus-dial .major-ticks { opacity: .76; }
 
     .progress {
-      stroke: url(#arc-color);
-      stroke-width: 3;
-      stroke-linecap: round;
+      stroke: white;
+      stroke-width: 6;
+      fill: none;
       stroke-dasharray: 100;
       stroke-dashoffset: 0;
     }
 
+    .quarter-arcs { stroke-width: 4; }
+    .rainbow-arc { stroke: url(#rainbow-gradient); stroke-width: 4; opacity: 0; }
+    .focus-view[data-urgency="rainbow"] .rainbow-arc,
+    .focus-view[data-urgency="countdown"] .rainbow-arc { opacity: 1; animation: rainbow-flow 5s linear infinite; }
+    .focus-view[data-urgency="rainbow"] .quarter-arcs,
+    .focus-view[data-urgency="countdown"] .quarter-arcs { opacity: 0; }
     .focus-view[data-state="running"] .progress { transition: stroke-dashoffset .2s linear; }
-    .focus-view[data-state="paused"] .progress { opacity: .55; }
-    .focus-view[data-state="done"] .progress { visibility: hidden; }
+    .focus-view[data-state="paused"] .ring-colors { opacity: .55; }
+    .focus-view[data-state="paused"] .rainbow-arc { animation-play-state: paused; }
+    .focus-view[data-state="done"] .ring-colors { visibility: hidden; }
     .focus-view[data-state="done"] .track { stroke: #658b74; }
 
     .readout {
@@ -220,6 +259,9 @@
     }
 
     .time {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: min(15vw, 16vh, 8.5rem);
       font-size: min(21cqi, 9rem);
       font-weight: 350;
@@ -227,17 +269,55 @@
       letter-spacing: -.07em;
     }
 
+    .time-button {
+      padding: .12em .06em;
+      border: 0;
+      border-radius: 16px;
+      background: transparent;
+      color: #edf1e9;
+      font: inherit;
+      letter-spacing: inherit;
+      line-height: 1;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .number-display, .number-group { display: inline-flex; align-items: center; justify-content: center; }
+    .number-display { gap: .07em; height: 1em; font-variant-numeric: tabular-nums lining-nums; line-height: 1; }
+    .number-group { gap: .015em; letter-spacing: -.065em; }
+    .number-colon { display: flex; flex: 0 0 .14em; height: .44em; align-self: center; flex-direction: column; justify-content: space-between; align-items: center; margin-inline: .035em; }
+    .number-colon::before, .number-colon::after { display: block; width: .065em; height: .065em; border-radius: 50%; background: currentColor; content: ""; }
+    .number-display svg.digit-svg { position: static; width: .46em; height: .79em; fill: currentColor; overflow: visible; }
+    .number-display[data-theme="clean"] { font-family: system-ui, sans-serif; font-weight: 300; }
+    .number-display[data-theme="bold"] { font-family: system-ui, sans-serif; font-weight: 800; }
+    .number-display[data-theme="mono"] { font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace; font-weight: 400; }
+    .number-display[data-theme="classic"] { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+    .number-display[data-theme="outline"] .numeral { font-family: system-ui, sans-serif; font-weight: 650; -webkit-text-fill-color: transparent; -webkit-text-stroke: .012em currentColor; }
+    .number-display[data-theme="italic"] { font-family: system-ui, sans-serif; font-style: italic; font-weight: 600; }
+    .number-display[data-theme="stencil"] .numeral { font-family: "Courier New", monospace; font-weight: 900; mask-image: linear-gradient(to bottom, black 35%, transparent 35%, transparent 38%, black 38%, black 65%, transparent 65%, transparent 68%, black 68%); }
+    .focus-view[data-urgency="countdown"] .time { font-size: min(39cqi, 15rem); color: var(--stage-color); }
+    .focus-view[data-urgency="countdown"] .minutes,
+    .focus-view[data-urgency="countdown"] .number-colon { display: none; }
+
+    .second-pulse { position: absolute; inset: 12%; border: 1px solid var(--stage-color); border-radius: 50%; opacity: 0; }
+    .focus-view[data-urgency="countdown"][data-state="running"] .second-pulse { animation: second-pulse 1s ease-out infinite; }
+    .phase:empty { display: none; }
+
     .phase {
       margin: 0;
+      max-width: 70cqi;
       color: var(--muted);
       font-size: clamp(.72rem, 3cqi, 1rem);
       letter-spacing: .1em;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
     }
 
     .focus-view[data-state="done"] .phase { color: var(--accent); }
 
     .focus-trigger {
       position: absolute;
+      z-index: 1;
       inset: 0;
       width: 100%;
       height: 100%;
@@ -251,8 +331,9 @@
 
     .focus-controls {
       position: absolute;
+      z-index: 3;
       right: max(14px, env(safe-area-inset-right));
-      bottom: max(14px, env(safe-area-inset-bottom));
+      bottom: max(14px, env(safe-area-inset-bottom), env(safe-area-inset-top));
       left: max(14px, env(safe-area-inset-left));
       display: grid;
       justify-content: center;
@@ -308,7 +389,6 @@
     .rotation-summary:hover { border-color: #819e8e; }
     .rotation-summary strong { color: var(--accent); font-size: .78rem; font-weight: 600; }
     .summary-times { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 5px 10px; }
-    .angle-label { margin: 0; color: var(--accent); font-size: clamp(.7rem, 3cqi, .95rem); }
 
     .slot-tabs {
       display: grid;
@@ -408,6 +488,47 @@
     .manager-message:empty { display: none; }
     .manager .manager-message[data-error] { color: #ffc9b5; }
 
+    .manager input#focus-message { width: 100%; padding-inline: 12px; text-align: left; }
+    .message-label { color: var(--muted); font-size: .8rem; }
+    .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .theme-card { display: grid; min-height: 90px; gap: 10px; padding: 14px 5px 10px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); }
+    .theme-card[aria-pressed="true"] { color: var(--accent); border-color: #95b7a1; background: #25392e; }
+    .theme-card > span:last-child { color: var(--muted); font-size: .73rem; }
+    .theme-preview { font-size: 27px; }
+
+    .completion {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      overflow: hidden;
+      place-items: center;
+      border: 0;
+      background: #101612f2;
+      color: #dcefdc;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .completion-content { display: grid; justify-items: center; gap: 18px; }
+    .completion-symbol { position: relative; display: grid; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; place-items: center; }
+    .completion-symbol::before, .completion-symbol::after, .completion-wave { position: absolute; inset: 4%; border: 1px solid #b9e7cc; border-radius: 50%; animation: completion-wave 2.8s ease-out infinite; content: ""; }
+    .completion-symbol::after { animation-delay: -.93s; }
+    .completion-wave { animation-delay: -1.86s; }
+    .completion-symbol svg { width: 44%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: bell-sway 1.8s ease-in-out infinite; transform-origin: 50% 20%; }
+    .completion-title { font-size: clamp(1.4rem, 6vw, 2rem); font-weight: 650; letter-spacing: -.04em; }
+    .completion-hint { color: var(--muted); font-size: .82rem; }
+
+    @keyframes rainbow-flow { to { filter: hue-rotate(360deg); } }
+    @keyframes second-pulse { from { transform: scale(.88); opacity: .6; } to { transform: scale(1.15); opacity: 0; } }
+    @keyframes completion-wave { from { transform: scale(.64); opacity: .7; } to { transform: scale(1.55); opacity: 0; } }
+    @keyframes bell-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+
+    .focus-stage[data-compact="true"] .focus-controls { top: 50%; right: max(16px, env(safe-area-inset-right)); bottom: auto; left: auto; grid-template-columns: 116px; transform: translateY(-50%); }
+    .focus-stage[data-compact="true"] .slot-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
     @media (max-width: 350px) {
       .manager-header, .manager-footer { padding-inline: 14px; }
       .manager-content { padding-inline: 14px; }
@@ -417,19 +538,13 @@
       .setup { padding-block: 16px; }
       .setup-dial { width: min(50vh, 230px); }
       .duration-field input { font-size: min(14vh, 4.75rem); }
-      .focus-controls {
-        top: 50%;
-        right: max(16px, env(safe-area-inset-right));
-        bottom: auto;
-        left: auto;
-        grid-template-columns: 116px;
-        transform: translateY(-50%);
-      }
-      .slot-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .focus-view[data-state="running"] .progress { transition: none; }
+      .focus-view .rainbow-arc, .focus-view .second-pulse,
+      .completion-symbol::before, .completion-symbol::after, .completion-wave,
+      .completion-symbol svg { animation: none !important; }
     }
   </style>
 </head>
@@ -489,25 +604,54 @@
     </section>
 
     <section class="focus-view" id="focus-view" aria-label="집중 화면" hidden>
+      <div class="focus-stage" id="focus-stage">
+      <div class="session-label">
+        <strong id="session-duration">5분 타이머</strong>
+        <span id="session-angle">일반 · 0°</span>
+      </div>
+      <button type="button" class="icon-button fullscreen-button" id="fullscreen-toggle" aria-label="전체 화면으로 보기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5" stroke-width="1.5" stroke-linecap="round" /></svg>
+      </button>
       <div class="dial focus-dial">
         <svg viewBox="0 0 240 240" aria-hidden="true">
           <defs>
-            <linearGradient id="arc-color" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#94b9a3" />
-              <stop offset="100%" stop-color="#d2f0cf" />
+            <linearGradient id="rainbow-gradient" x1="0" y1="0" x2="240" y2="240" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#b891ff" /><stop offset=".18" stop-color="#7eafff" />
+              <stop offset=".36" stop-color="#69e6d1" /><stop offset=".52" stop-color="#a6ed91" />
+              <stop offset=".68" stop-color="#f6dd73" /><stop offset=".84" stop-color="#ffa68a" />
+              <stop offset="1" stop-color="#ee8acb" />
             </linearGradient>
+            <mask id="remaining-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+              <path class="progress" id="progress" d="M120 19A101 101 0 1 0 120 221A101 101 0 1 0 120 19" pathLength="100" />
+            </mask>
           </defs>
           <g transform="rotate(-90 120 120)">
             <circle class="ticks" cx="120" cy="120" r="112" pathLength="60" />
             <circle class="major-ticks" cx="120" cy="120" r="112" pathLength="12" />
-            <circle class="track" cx="120" cy="120" r="101" />
-            <circle class="progress" id="progress" cx="120" cy="120" r="101" pathLength="100" />
+          </g>
+          <circle class="track" cx="120" cy="120" r="101" />
+          <g class="ring-colors" mask="url(#remaining-mask)">
+            <g class="quarter-arcs">
+              <path d="M120 19A101 101 0 0 0 19 120" stroke="#bc9af7" />
+              <path d="M19 120A101 101 0 0 0 120 221" stroke="#f2d46d" />
+              <path d="M120 221A101 101 0 0 0 221 120" stroke="#83daa2" />
+              <path d="M221 120A101 101 0 0 0 120 19" stroke="#f38c8c" />
+            </g>
+            <circle class="rainbow-arc" cx="120" cy="120" r="101" />
           </g>
         </svg>
+        <div class="second-pulse" aria-hidden="true"></div>
         <div class="readout">
-          <p class="angle-label" id="angle-label">일반 · 0°</p>
-          <div class="time" id="remaining" role="timer" aria-label="남은 시간 5분 0초">05:00</div>
-          <p class="phase" id="phase" role="status">집중 중</p>
+          <div class="time" id="remaining" role="timer" aria-label="남은 시간 5분 0초">
+            <button type="button" class="time-button" id="time-toggle" aria-label="타이머 일시정지">
+              <span class="number-display" id="number-display" data-theme="clean" aria-hidden="true">
+                <span class="number-group minutes" id="minutes-display"></span>
+                <span class="number-colon"></span>
+                <span class="number-group seconds" id="seconds-display"></span>
+              </span>
+            </button>
+          </div>
+          <p class="phase" id="phase" role="status"></p>
         </div>
       </div>
 
@@ -519,6 +663,17 @@
         <div class="slot-tabs" id="slot-tabs" role="group" aria-label="각도별 타이머 전환"></div>
         <p class="lock-status" id="screen-lock-status" role="status"></p>
       </div>
+      <button type="button" class="completion" id="completion" aria-label="타이머 종료 표시 끄기" hidden>
+        <span class="completion-content" aria-hidden="true">
+          <span class="completion-symbol">
+            <span class="completion-wave"></span>
+            <svg viewBox="0 0 64 64"><path d="M16 43c4-5 5-9 5-17a11 11 0 0 1 22 0c0 8 1 12 5 17H16Zm11 7a5 5 0 0 0 10 0M29 11a3 3 0 0 1 6 0M10 24c-3 6-3 12 0 18m44-18c3 6 3 12 0 18" /></svg>
+          </span>
+          <span class="completion-title">시간이 되었어요</span>
+          <span class="completion-hint">터치하면 종료 표시가 멈춰요</span>
+        </span>
+      </button>
+      </div>
     </section>
 
     <dialog class="manager" id="manager" aria-labelledby="manager-title">
@@ -529,6 +684,15 @@
         </button>
       </header>
       <div class="manager-content">
+        <section class="manager-section" aria-labelledby="appearance-heading">
+          <div class="section-heading">
+            <h3 id="appearance-heading">나의 집중 화면</h3>
+            <p>문구와 숫자 모양을 골라 나에게 편한 화면을 만드세요.</p>
+          </div>
+          <label class="message-label" for="focus-message">타이머에 표시할 문구 · 비워두면 표시하지 않아요</label>
+          <input type="text" id="focus-message" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="예. 지금은 이 일 하나만">
+          <div class="theme-grid" id="theme-grid" role="group" aria-label="숫자 테마 10개"></div>
+        </section>
         <section class="manager-section" aria-labelledby="presets-heading">
           <div class="section-heading">
             <h3 id="presets-heading">나의 시간 버튼</h3>
@@ -587,7 +751,14 @@
       presets: [5, 10, 15, 30, 60],
       rotationEnabled: true,
       rotations: [10, 15, 30],
+      message: '',
+      theme: 'clean',
     };
+    const themes = [
+      ['clean', '고요'], ['bold', '볼드'], ['mono', '모노'], ['classic', '클래식'],
+      ['outline', '아웃라인'], ['italic', '이탤릭'], ['digital', '디지털'],
+      ['led', '라운드 LED'], ['dots', '도트'], ['stencil', '스텐실'],
+    ];
     const setup = document.getElementById('setup');
     const duration = document.getElementById('duration');
     const setupNote = document.getElementById('setup-note');
@@ -598,12 +769,20 @@
     const summaryTitle = document.getElementById('rotation-summary-title');
     const summaryTimes = document.getElementById('summary-times');
     const focusView = document.getElementById('focus-view');
+    const focusStage = document.getElementById('focus-stage');
+    const sessionDuration = document.getElementById('session-duration');
+    const sessionAngle = document.getElementById('session-angle');
+    const fullscreenToggle = document.getElementById('fullscreen-toggle');
     const focusTrigger = document.getElementById('focus-trigger');
     const focusControls = document.getElementById('focus-controls');
     const progress = document.getElementById('progress');
     const remaining = document.getElementById('remaining');
     const phase = document.getElementById('phase');
-    const angleLabel = document.getElementById('angle-label');
+    const timeToggle = document.getElementById('time-toggle');
+    const numberDisplay = document.getElementById('number-display');
+    const minutesDisplay = document.getElementById('minutes-display');
+    const secondsDisplay = document.getElementById('seconds-display');
+    const completion = document.getElementById('completion');
     const toggle = document.getElementById('toggle');
     const stop = document.getElementById('stop');
     const slotTabs = document.getElementById('slot-tabs');
@@ -618,6 +797,8 @@
     const managerMessage = document.getElementById('manager-message');
     const sensorStatus = document.getElementById('sensor-status');
     const sensorConnect = document.getElementById('sensor-connect');
+    const focusMessage = document.getElementById('focus-message');
+    const themeGrid = document.getElementById('theme-grid');
     const labels = {
       ready: { phase: '대기', action: '시작' },
       running: { phase: '집중 중', action: '일시멈춤' },
@@ -636,12 +817,19 @@
     let screenBaseline = null;
     let sensorBaseline = null;
     let lastSensorQuarter = null;
+    let layoutPhysicalQuarter = null;
     let lastSensorAt = -Infinity;
     let sensorUsable = false;
     let detectedIndex = 0;
     let pendingIndex = null;
     let rotationTimeout;
     let sensorPermission = 'unknown';
+    let draftTheme = settings.theme;
+    let lastBeat = '';
+    let completionTimeout;
+    let completionUntil = 0;
+    let fullscreenPending = false;
+    let orientationLockOwned = false;
     const slotButtons = [];
     const slotReadouts = [];
 
@@ -674,6 +862,8 @@
           presets: saved.presets,
           rotations: saved.rotations,
           rotationEnabled: typeof saved.rotationEnabled === 'boolean' ? saved.rotationEnabled : true,
+          message: typeof saved.message === 'string' ? saved.message.slice(0, 80).trim() : '',
+          theme: themes.some(([id]) => id === saved.theme) ? saved.theme : defaults.theme,
         };
       } catch {
         return fallback;
@@ -696,6 +886,95 @@
     function formatTime(milliseconds) {
       const seconds = Math.ceil(milliseconds / 1000);
       return formatNumber(Math.floor(seconds / 60)) + ':' + formatNumber(seconds % 60);
+    }
+
+    function svgNode(tag, attributes) {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, String(value));
+      return element;
+    }
+
+    function renderDigits(container, text, theme) {
+      const key = theme + ':' + text;
+      if (container.dataset.digits === key) return;
+      container.dataset.digits = key;
+      if (!['digital', 'led', 'dots'].includes(theme)) {
+        const numeral = document.createElement('span');
+        numeral.className = 'numeral';
+        numeral.textContent = text;
+        container.replaceChildren(numeral);
+        return;
+      }
+      const segments = ['abcdef', 'bc', 'abdeg', 'abcdg', 'bcfg', 'acdfg', 'acdefg', 'abc', 'abcdefg', 'abcdfg'];
+      const paths = {
+        a: 'M8 5H32', b: 'M35 10V30', c: 'M35 40V60', d: 'M8 65H32',
+        e: 'M5 40V60', f: 'M5 10V30', g: 'M8 35H32',
+      };
+      const dotPatterns = [
+        ['01110','10001','10011','10101','11001','10001','01110'],
+        ['00100','01100','00100','00100','00100','00100','01110'],
+        ['01110','10001','00001','00010','00100','01000','11111'],
+        ['11110','00001','00001','01110','00001','00001','11110'],
+        ['00010','00110','01010','10010','11111','00010','00010'],
+        ['11111','10000','10000','11110','00001','00001','11110'],
+        ['01110','10000','10000','11110','10001','10001','01110'],
+        ['11111','00001','00010','00100','01000','01000','01000'],
+        ['01110','10001','10001','01110','10001','10001','01110'],
+        ['01110','10001','10001','01111','00001','00001','01110'],
+      ];
+      const digits = Array.from(text, (character) => {
+        const svg = svgNode('svg', { viewBox: theme === 'dots' ? '0 0 40 56' : '0 0 40 70', class: 'digit-svg' });
+        if (theme === 'dots') {
+          dotPatterns[Number(character)].forEach((row, y) => {
+            Array.from(row).forEach((dot, x) => {
+              if (dot === '1') svg.append(svgNode('circle', { cx: 4 + x * 8, cy: 4 + y * 8, r: 2.5 }));
+            });
+          });
+        } else {
+          for (const segment of segments[Number(character)]) {
+            svg.append(svgNode('path', {
+              d: paths[segment], fill: 'none', stroke: 'currentColor',
+              'stroke-width': theme === 'led' ? 8 : 6,
+              'stroke-linecap': theme === 'led' ? 'round' : 'butt',
+            }));
+          }
+        }
+        return svg;
+      });
+      container.replaceChildren(...digits);
+    }
+
+    function renderThemeChoices() {
+      const cards = themes.map(([id, name]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-card';
+        button.setAttribute('aria-label', name + ' 숫자 테마');
+        button.setAttribute('aria-pressed', String(id === draftTheme));
+        const preview = document.createElement('span');
+        preview.className = 'number-display theme-preview';
+        preview.dataset.theme = id;
+        preview.setAttribute('aria-hidden', 'true');
+        const first = document.createElement('span');
+        const last = document.createElement('span');
+        first.className = last.className = 'number-group';
+        const colon = document.createElement('span');
+        colon.className = 'number-colon';
+        renderDigits(first, '12', id);
+        renderDigits(last, '34', id);
+        preview.append(first, colon, last);
+        const label = document.createElement('span');
+        label.textContent = name;
+        button.append(preview, label);
+        button.addEventListener('click', () => {
+          draftTheme = id;
+          for (const [index, card] of Array.from(themeGrid.children).entries()) {
+            card.setAttribute('aria-pressed', String(themes[index][0] === id));
+          }
+        });
+        return button;
+      });
+      themeGrid.replaceChildren(...cards);
     }
 
     function renderPresets() {
@@ -751,11 +1030,30 @@
       const timer = timers[activeIndex];
       const time = formatTime(timer.remainingMs);
       const totalSeconds = Math.ceil(timer.remainingMs / 1000);
-      progress.style.strokeDashoffset = 100 * (1 - timer.remainingMs / timer.totalMs);
-      if (remaining.textContent !== time) {
-        remaining.textContent = time;
+      const elapsed = 1 - timer.remainingMs / timer.totalMs;
+      progress.style.strokeDashoffset = -100 * elapsed;
+      const colors = ['#bc9af7', '#f2d46d', '#83daa2', '#f38c8c'];
+      focusStage.style.setProperty('--stage-color', colors[Math.min(3, Math.floor(elapsed * 4))]);
+      let urgency = 'normal';
+      if (timer.remainingMs > 0 && timer.remainingMs <= 60000) urgency = 'rainbow';
+      if (timer.remainingMs > 0 && timer.remainingMs <= 10000) urgency = 'countdown';
+      focusView.dataset.urgency = urgency;
+      numberDisplay.dataset.theme = settings.theme;
+      renderDigits(minutesDisplay, formatNumber(Math.floor(totalSeconds / 60)), settings.theme);
+      renderDigits(secondsDisplay, urgency === 'countdown' ? String(totalSeconds) : formatNumber(totalSeconds % 60), settings.theme);
+      if (remaining.dataset.time !== time) {
+        remaining.dataset.time = time;
         remaining.setAttribute('aria-label', '남은 시간 ' + Math.floor(totalSeconds / 60) + '분 ' + totalSeconds % 60 + '초');
       }
+      const beat = activeIndex + ':' + totalSeconds + ':' + timer.state;
+      if (beat !== lastBeat && urgency === 'countdown' && timer.state === 'running' &&
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        numberDisplay.animate?.([
+          { transform: 'scale(1.12)', opacity: .75 },
+          { transform: 'scale(1)', opacity: 1 },
+        ], { duration: 650, easing: 'cubic-bezier(.16, 1, .3, 1)' });
+      }
+      lastBeat = beat;
       const title = timer.state === 'done' ? '시간 종료 · 집중 타이머' : time + ' · ' + labels[timer.state].phase;
       if (document.title !== title) document.title = title;
 
@@ -772,10 +1070,12 @@
       if (sessionActive) {
         const timer = timers[activeIndex];
         focusView.dataset.state = timer.state;
-        setText(phase, labels[timer.state].phase);
+        setText(phase, timer.state === 'running' ? settings.message : labels[timer.state].phase);
         setText(toggle, labels[timer.state].action);
         setText(stop, timer.state === 'done' ? '시간 설정' : '정지');
-        setText(angleLabel, activeIndex === 0 ? '일반 · 0°' : activeIndex * 90 + '°');
+        setText(sessionDuration, timer.totalMs / minuteMs + '분 타이머');
+        setText(sessionAngle, activeIndex === 0 ? '일반 · 0°' : activeIndex * 90 + '°');
+        timeToggle.setAttribute('aria-label', timer.state === 'running' ? '타이머 일시정지' : '타이머 계속 실행');
         slotTabs.hidden = !settings.rotationEnabled;
       }
       renderTime();
@@ -798,6 +1098,7 @@
       if (timers[activeIndex].state === 'done') {
         setControls(true);
         render();
+        showCompletion(deadline + 10000);
       } else {
         renderTime();
       }
@@ -805,6 +1106,7 @@
 
     function startActiveTimer() {
       clearInterval(interval);
+      dismissCompletion();
       const timer = timers[activeIndex];
       deadline = Date.now() + timer.remainingMs;
       timer.state = 'running';
@@ -816,6 +1118,7 @@
 
     function switchTimer(index) {
       if (!sessionActive || !settings.rotationEnabled || index === activeIndex) return;
+      dismissCompletion();
       syncTimer();
       clearInterval(interval);
       if (timers[activeIndex].state === 'running') timers[activeIndex].state = 'paused';
@@ -857,8 +1160,84 @@
       sessionActive = true;
       setup.hidden = true;
       focusView.hidden = false;
+      updateFocusLayout();
       startActiveTimer();
-      if (settings.rotationEnabled) connectSensors();
+      connectSensors();
+      enterFullscreen();
+    }
+
+    function dismissCompletion() {
+      clearTimeout(completionTimeout);
+      completionUntil = 0;
+      completion.hidden = true;
+    }
+
+    function showCompletion(until) {
+      dismissCompletion();
+      const remaining = until - Date.now();
+      if (remaining <= 0) return;
+      completionUntil = until;
+      completion.hidden = document.visibilityState !== 'visible';
+      if (!completion.hidden) completion.focus();
+      completionTimeout = setTimeout(() => {
+        dismissCompletion();
+        focusTrigger.focus();
+      }, remaining);
+    }
+
+    function updateFocusLayout() {
+      if (!sessionActive) return;
+      const screenQuarter = readScreenQuarter() ?? 0;
+      const physicalQuarter = layoutPhysicalQuarter ?? screenQuarter;
+      const correction = normalizeQuarter(screenQuarter - physicalQuarter);
+      const width = focusView.clientWidth || window.innerWidth;
+      const height = focusView.clientHeight || window.innerHeight;
+      const swapped = correction % 2 === 1;
+      const stageWidth = swapped ? height : width;
+      const stageHeight = swapped ? width : height;
+      focusStage.style.width = stageWidth + 'px';
+      focusStage.style.height = stageHeight + 'px';
+      focusStage.style.setProperty('--ui-rotation', correction * 90 + 'deg');
+      focusStage.style.setProperty('--dial-size', Math.min(stageWidth * .85, stageHeight * .8, 760) + 'px');
+      focusStage.style.setProperty('--alarm-size', Math.min(stageWidth * .54, stageHeight * .38, 240) + 'px');
+      focusStage.dataset.compact = String(stageWidth >= 520 && stageHeight <= 460);
+    }
+
+    async function enterFullscreen() {
+      if (!sessionActive || fullscreenPending || document.fullscreenElement === focusView ||
+          document.webkitFullscreenElement === focusView) return;
+      const request = focusView.requestFullscreen || focusView.webkitRequestFullscreen;
+      if (!request) return;
+      fullscreenPending = true;
+      try {
+        await request.call(focusView, { navigationUI: 'hide' });
+        if (!sessionActive) {
+          leaveFullscreen();
+          return;
+        }
+        // Allow the browser to use all four orientations before applying our HTML fallback.
+        if (window.screen?.orientation?.lock) {
+          try {
+            await window.screen.orientation.lock('any');
+            orientationLockOwned = true;
+            if (!sessionActive) leaveFullscreen();
+          } catch {}
+        }
+      } catch {
+        // The viewport-sized timer remains usable when fullscreen is unavailable.
+      } finally {
+        fullscreenPending = false;
+        updateFocusLayout();
+      }
+    }
+
+    function leaveFullscreen() {
+      if (orientationLockOwned) {
+        window.screen.orientation.unlock();
+        orientationLockOwned = false;
+      }
+      if (document.fullscreenElement === focusView) document.exitFullscreen().catch(() => {});
+      else if (document.webkitFullscreenElement === focusView) document.webkitExitFullscreen();
     }
 
     async function updateScreenLock() {
@@ -943,6 +1322,9 @@
     }
 
     function openManager() {
+      focusMessage.value = settings.message;
+      draftTheme = settings.theme;
+      renderThemeChoices();
       renderPresetEditor(settings.presets);
       rotationEnabled.checked = settings.rotationEnabled;
       rotationInputs.forEach((input, index) => {
@@ -993,6 +1375,8 @@
         normalMinutes: readMinutes(duration.value) || settings.normalMinutes,
         rotationEnabled: rotationEnabled.checked,
         rotations,
+        message: focusMessage.value.slice(0, 80).trim(),
+        theme: draftTheme,
       };
       const saved = persistSettings();
       renderPresets();
@@ -1035,7 +1419,11 @@
       }, 300);
     }
 
-    function onScreenChange() {
+    function onScreenChange(event) {
+      if (event && (!sensorUsable || Date.now() - lastSensorAt >= 1500)) {
+        layoutPhysicalQuarter = readScreenQuarter();
+      }
+      updateFocusLayout();
       if (!sessionActive || !settings.rotationEnabled) return;
       if (sensorUsable && Date.now() - lastSensorAt < 1500) return;
       const quarter = readScreenQuarter();
@@ -1045,7 +1433,7 @@
     }
 
     function onDeviceOrientation(event) {
-      if (document.visibilityState !== 'visible' || (!settings.rotationEnabled && !manager.open)) return;
+      if (document.visibilityState !== 'visible') return;
       if (!Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
       const beta = event.beta * Math.PI / 180;
       const gamma = event.gamma * Math.PI / 180;
@@ -1066,7 +1454,9 @@
         return;
       }
       lastSensorQuarter = quarter;
+      layoutPhysicalQuarter = quarter;
       lastSensorAt = Date.now();
+      updateFocusLayout();
       if (manager.open) updateSensorStatus();
       if (!sessionActive || !settings.rotationEnabled) return;
       if (sensorBaseline === null) {
@@ -1142,29 +1532,47 @@
     });
 
     focusTrigger.addEventListener('click', () => setControls(focusControls.hidden));
-    toggle.addEventListener('click', () => {
+    function toggleTimer() {
       if (!sessionActive) return;
+      if (!completion.hidden) {
+        dismissCompletion();
+        return;
+      }
       const timer = timers[activeIndex];
       if (timer.state === 'running') {
         syncTimer();
         if (timer.state === 'done') {
           setControls(true);
           render();
+          showCompletion(deadline + 10000);
           return;
         }
         clearInterval(interval);
         timer.state = 'paused';
+        setControls(true);
         render();
       } else {
         if (timer.state === 'done') timer.remainingMs = timer.totalMs;
         startActiveTimer();
       }
+    }
+    toggle.addEventListener('click', toggleTimer);
+    timeToggle.addEventListener('click', toggleTimer);
+    completion.addEventListener('click', () => {
+      dismissCompletion();
+      focusTrigger.focus();
+    });
+    fullscreenToggle.addEventListener('click', () => {
+      if (document.fullscreenElement === focusView || document.webkitFullscreenElement === focusView) leaveFullscreen();
+      else enterFullscreen();
     });
 
     stop.addEventListener('click', () => {
       clearInterval(interval);
       cancelPendingRotation();
+      dismissCompletion();
       sessionActive = false;
+      leaveFullscreen();
       timers = [];
       activeIndex = 0;
       focusView.hidden = true;
@@ -1202,12 +1610,28 @@
 
     window.addEventListener('deviceorientation', onDeviceOrientation);
     window.addEventListener('orientationchange', onScreenChange);
+    window.addEventListener('resize', updateFocusLayout);
+    window.visualViewport?.addEventListener('resize', updateFocusLayout);
     window.screen?.orientation?.addEventListener('change', onScreenChange);
+    function onFullscreenChange() {
+      const active = document.fullscreenElement === focusView || document.webkitFullscreenElement === focusView;
+      fullscreenToggle.setAttribute('aria-label', active ? '전체 화면 나가기' : '전체 화면으로 보기');
+      if (!active && orientationLockOwned) {
+        window.screen.orientation.unlock();
+        orientationLockOwned = false;
+      }
+      updateFocusLayout();
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     document.addEventListener('visibilitychange', () => {
       tick();
       updateScreenLock();
       if (document.visibilityState === 'hidden') cancelPendingRotation();
-      else onScreenChange();
+      else {
+        if (completionUntil) showCompletion(completionUntil);
+        onScreenChange();
+      }
     });
 
     duration.value = formatNumber(settings.normalMinutes);
