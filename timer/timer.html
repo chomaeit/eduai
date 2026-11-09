@@ -341,37 +341,24 @@
     .number-display[data-theme="flip-aurora"] .flip-digit { --card-top: linear-gradient(135deg, #284e5f, #484068); --card-bottom: linear-gradient(135deg, #172f41, #302644); }
     .number-display[data-theme="flip-aurora"] .card-glyph { background: linear-gradient(100deg, #a8f5d9, #bbbcff, #ffbadd, #a8f5d9); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: aurora-drift 7s linear infinite; }
     .focus-view[data-state="paused"] .card-glyph { animation-play-state: paused; }
-    .number-display[data-theme="watch-orange"] {
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      justify-content: stretch;
-      align-items: stretch;
+    .number-display[data-layout="composition"] {
+      display: block;
       width: 2.6em;
       height: 2.8em;
       gap: 0;
-      padding: .12em .1em;
-      overflow: hidden;
-      border: 1px solid #ffc6a140;
+      padding: 0;
       border-radius: .6em;
-      background: linear-gradient(to bottom, #ff9869 50%, #c84a09 50%);
-      box-shadow: inset 0 1px 1px #ffd3b6aa, 0 .06em .16em #0005;
+      box-shadow: 0 .06em .16em #0005;
     }
 
-    .number-display[data-theme="watch-orange"] .number-group { position: relative; gap: .015em; width: 100%; height: 100%; color: #090b08; }
-    .number-display[data-theme="watch-orange"] .seconds { color: #ffae76; }
-    .number-display[data-theme="watch-orange"] .number-colon { display: none; }
-    .number-display svg.watch-digit { position: static; width: .88em; height: 1.16em; fill: none; }
-    .number-display[data-theme="watch-orange"] .minutes[data-length="3"] svg.watch-digit { width: .65em; }
-    .number-display[data-theme="watch-orange"] .number-group::after { position: absolute; right: .14em; bottom: .2em; font: 500 .12em system-ui, sans-serif; opacity: .7; }
-    .number-display[data-theme="watch-orange"] .minutes::after { content: "분"; }
-    .number-display[data-theme="watch-orange"] .seconds::after { content: "초"; }
-    .theme-preview[data-theme="watch-orange"] { justify-self: center; font-size: 18px; }
+    .number-display[data-layout="composition"] > .number-group,
+    .number-display[data-layout="composition"] > .number-colon { display: none; }
+    .watch-composition { display: block; width: 100%; height: 100%; }
+    .number-display svg.watch-face-svg { position: static; display: block; width: 100%; height: 100%; fill: none; overflow: visible; }
+    .theme-preview[data-layout="composition"] { justify-self: center; font-size: 18px; }
     .theme-preview[data-theme="watch-pastel"] { justify-self: center; min-height: 46px; padding: .3em; border: 3px solid #cad7ed; border-radius: 18px; background: #f1f3f8; color: #3593ed; font-size: 22px; font-weight: 600; }
-    .focus-view[data-theme="watch-orange"] .phase { top: calc(100% + 8px); }
-    .focus-view[data-theme="watch-orange"][data-urgency="countdown"] .time { font-size: min(24cqi, 10.5rem); }
-    .focus-view[data-theme="watch-orange"][data-urgency="countdown"] .number-display { grid-template-rows: 1fr; background: #cc5919; }
-    .focus-view[data-theme="watch-orange"][data-urgency="countdown"] .seconds svg.watch-digit { width: .9em; height: 2em; }
-    .focus-view[data-theme="watch-orange"][data-urgency="countdown"] .seconds[data-length="1"] svg.watch-digit { width: 1.35em; }
+    .focus-view[data-composed="true"] .phase { top: calc(100% + 8px); }
+    .focus-view[data-composed="true"][data-urgency="countdown"] .time { font-size: min(24cqi, 10.5rem); }
     .pastel-marker { display: none; }
     .focus-view[data-theme="watch-pastel"] { background: radial-gradient(ellipse at 45% 35%, #fcfdff, #e9ebf2); }
     .focus-view[data-theme="watch-pastel"] .dial::before { background: radial-gradient(circle at 40% 25%, #fff, #f1f2f7); box-shadow: 0 8px 40px #8e9fc112; }
@@ -581,8 +568,11 @@
     .remove-preset { width: 40px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.25rem; }
     .remove-preset:hover { color: #ffc9b5; background: #30251e; }
     .add-preset { background: transparent; color: var(--accent); }
-    .rotation-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 650; font-size: .93rem; cursor: pointer; }
-    .rotation-toggle input { width: 22px; height: 22px; margin: 0; accent-color: #bee7c9; cursor: pointer; }
+    .setting-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 650; font-size: .93rem; cursor: pointer; }
+    .setting-toggle input { width: 22px; height: 22px; margin: 0; accent-color: #bee7c9; cursor: pointer; }
+    .alert-options { display: grid; gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: var(--line); }
+    .alert-options .setting-toggle { min-height: 52px; padding: 10px 14px; background: var(--panel); }
+    #completion-alert-support:empty { display: none; }
     .rotation-fields { display: grid; min-width: 0; gap: 0; padding: 0; margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
     .rotation-fields:disabled { opacity: .45; }
     .rotation-row { display: flex; min-height: 65px; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
@@ -620,30 +610,53 @@
       overflow: hidden;
       place-items: center;
       border: 0;
-      background: #101612f2;
-      color: #dcefdc;
+      background: radial-gradient(ellipse at 50% 35%, #282c56, #0b1025 70%);
+      color: #edfbff;
+      isolation: isolate;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .completion-content { display: grid; justify-items: center; gap: 18px; }
-    .completion-symbol { position: relative; display: grid; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; place-items: center; }
-    .completion-symbol::before, .completion-symbol::after, .completion-wave { position: absolute; inset: 4%; border: 1px solid #b9e7cc; border-radius: 50%; animation: completion-wave 2.8s ease-out infinite; content: ""; }
-    .completion-symbol::after { animation-delay: -.93s; }
-    .completion-wave { animation-delay: -1.86s; }
-    .completion-symbol svg { width: 44%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: bell-sway 1.8s ease-in-out infinite; transform-origin: 50% 20%; }
-    .completion-title { font-size: clamp(1.4rem, 6vw, 2rem); font-weight: 650; letter-spacing: -.04em; }
-    .completion-hint { color: var(--muted); font-size: .82rem; }
+    .completion-content { position: relative; z-index: 2; display: grid; justify-items: center; gap: 14px; pointer-events: none; }
+    .completion-glow { position: absolute; z-index: -1; inset: -60%; background: conic-gradient(from 30deg, #35d4e900, #45d5ee80, #9895ff70, #f087d080, #edc26f50, #35d4e900); filter: blur(45px); animation: celebration-spin 24s linear infinite; pointer-events: none; }
+    .completion-rays { position: absolute; width: 150vmax; height: 150vmax; background: repeating-conic-gradient(from 0deg, #a9bfff28 0deg 1deg, transparent 1.5deg 12deg); mask-image: radial-gradient(circle, transparent 5%, black 19%, transparent 49%); animation: celebration-spin 40s linear infinite; pointer-events: none; }
+    .completion-symbol { display: block; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; }
+    .completion-symbol svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .completion-petal { transform-origin: 120px 120px; animation: completion-bloom .85s cubic-bezier(.16, 1, .3, 1) var(--bloom-delay, 0ms) both; }
+    .completion-orbit { transform-origin: 120px 120px; animation: celebration-spin 24s linear infinite; }
+    .completion-core { filter: drop-shadow(0 0 9px #a8ddff70); }
+    .completion-check { animation: completion-check .55s ease-out .55s both; }
+    .completion-kicker { color: #c8dbff; font: 500 .78rem system-ui, sans-serif; letter-spacing: .25em; }
+    .completion-title { background: linear-gradient(100deg, #b6f6ff, #e4c3ff, #ffd0dc, #ffe5ad, #b6f6ff); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; letter-spacing: -.055em; animation: aurora-drift 6s linear infinite; }
+    .completion-detail { color: #d9ddf0; font-size: .9rem; }
+    .completion-hint { margin-top: 6px; padding: 8px 15px; border: 1px solid #d9e0ff35; border-radius: 99px; color: #c2cbe2; font-size: .78rem; }
+    .completion-particles { position: absolute; inset: 0; pointer-events: none; --burst-radius: min(42vmin, 300px); }
+    .completion-particles i { position: absolute; top: 44%; left: 50%; width: var(--size); height: var(--size); background: var(--spark-color); color: var(--spark-color); box-shadow: 0 0 12px currentColor; opacity: 0; animation: celebration-burst var(--duration) cubic-bezier(.12, .6, .3, 1) var(--delay) infinite; }
+    .completion-particles .spark { clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%); }
+    .completion-particles .confetti { height: calc(var(--size) * .5); border-radius: 2px; }
 
     @keyframes rainbow-flow { to { filter: hue-rotate(360deg); } }
     @keyframes second-pulse { from { transform: scale(.88); opacity: .6; } to { transform: scale(1.15); opacity: 0; } }
-    @keyframes completion-wave { from { transform: scale(.64); opacity: .7; } to { transform: scale(1.55); opacity: 0; } }
-    @keyframes bell-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+    @keyframes completion-bloom { from { transform: scale(.15) rotate(-32deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+    @keyframes completion-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
     @keyframes card-fold-up { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
     @keyframes card-fold-down { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
     @keyframes aurora-drift { to { background-position: 300% 0; } }
+    @keyframes celebration-spin { to { transform: rotate(360deg); } }
+    @keyframes celebration-burst {
+      0% { transform: translate(0, 0) scale(.15) rotate(0); opacity: 0; }
+      10% { opacity: 1; }
+      85% { opacity: .7; }
+      100% { transform: translate(calc(var(--dx) * var(--burst-radius)), calc(var(--dy) * var(--burst-radius))) scale(.45) rotate(var(--twist)); opacity: 0; }
+    }
 
     .focus-stage[data-compact="true"] .focus-controls { top: 50%; right: max(16px, env(safe-area-inset-right)); bottom: auto; left: auto; grid-template-columns: 116px; transform: translateY(-50%); }
     .focus-stage[data-compact="true"] .slot-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .focus-stage[data-compact="true"] .completion-content { grid-template-columns: minmax(90px, 160px) auto; grid-template-areas: "symbol kicker" "symbol title" "symbol detail" "symbol hint"; column-gap: 30px; row-gap: 8px; justify-items: start; text-align: left; }
+    .focus-stage[data-compact="true"] .completion-symbol { grid-area: symbol; }
+    .focus-stage[data-compact="true"] .completion-kicker { grid-area: kicker; }
+    .focus-stage[data-compact="true"] .completion-title { grid-area: title; font-size: clamp(1.8rem, 5vw, 3rem); }
+    .focus-stage[data-compact="true"] .completion-detail { grid-area: detail; }
+    .focus-stage[data-compact="true"] .completion-hint { grid-area: hint; }
 
     @media (max-width: 350px) {
       .manager-header, .manager-footer { padding-inline: 14px; }
@@ -659,8 +672,9 @@
     @media (prefers-reduced-motion: reduce) {
       .focus-view[data-state="running"] .progress { transition: none; }
       .focus-view .rainbow-arc, .focus-view .second-pulse,
-      .completion-symbol::before, .completion-symbol::after, .completion-wave,
-      .completion-symbol svg, .card-glyph { animation: none !important; }
+      .completion-petal, .completion-orbit, .completion-check, .card-glyph, .completion-glow,
+      .completion-rays, .completion-title, .completion-particles i { animation: none !important; }
+      .completion-particles i { opacity: .5; transform: translate(calc(var(--dx) * var(--burst-radius)), calc(var(--dy) * var(--burst-radius))); }
     }
   </style>
 </head>
@@ -769,6 +783,7 @@
                 <span class="number-group minutes" id="minutes-display"></span>
                 <span class="number-colon"></span>
                 <span class="number-group seconds" id="seconds-display"></span>
+                <span class="watch-composition" id="watch-composition" hidden></span>
               </span>
             </button>
           </div>
@@ -785,12 +800,35 @@
         <p class="lock-status" id="screen-lock-status" role="status"></p>
       </div>
       <button type="button" class="completion" id="completion" aria-label="타이머 종료 표시 끄기" hidden>
+        <span class="completion-glow" aria-hidden="true"></span>
+        <span class="completion-rays" aria-hidden="true"></span>
+        <span class="completion-particles" id="completion-particles" aria-hidden="true"></span>
         <span class="completion-content" aria-hidden="true">
           <span class="completion-symbol">
-            <span class="completion-wave"></span>
-            <svg viewBox="0 0 64 64"><path d="M16 43c4-5 5-9 5-17a11 11 0 0 1 22 0c0 8 1 12 5 17H16Zm11 7a5 5 0 0 0 10 0M29 11a3 3 0 0 1 6 0M10 24c-3 6-3 12 0 18m44-18c3 6 3 12 0 18" /></svg>
+            <svg viewBox="0 0 240 240">
+              <defs>
+                <path id="completion-petal-shape" d="M120 116C96 109 65 91 62 65C59 39 78 23 104 31C133 40 144 70 120 116Z" />
+                <linearGradient id="completion-ice" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d0fbff"/><stop offset="1" stop-color="#3988dd"/></linearGradient>
+                <linearGradient id="completion-lilac" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f2ddff"/><stop offset="1" stop-color="#a06fee"/></linearGradient>
+                <linearGradient id="completion-coral" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3b6"/><stop offset="1" stop-color="#f17898"/></linearGradient>
+                <linearGradient id="completion-mint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e4ffd4"/><stop offset="1" stop-color="#42bba9"/></linearGradient>
+              </defs>
+              <g class="completion-orbit" fill="none">
+                <circle cx="120" cy="120" r="110" stroke="#d7eaff70" stroke-width="1" stroke-dasharray="1 7"/>
+                <g transform="rotate(28 120 120)"><ellipse cx="120" cy="120" rx="111" ry="61" stroke="#bdd5ff50"/><circle cx="231" cy="120" r="3.5" fill="#b5f6ff"/></g>
+                <g transform="rotate(-28 120 120)"><ellipse cx="120" cy="120" rx="111" ry="61" stroke="#ebcbff42"/><circle cx="9" cy="120" r="2.7" fill="#ffd1f2"/></g>
+              </g>
+              <use href="#completion-petal-shape" class="completion-petal" fill="url(#completion-ice)"/>
+              <g transform="rotate(90 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 100ms" fill="url(#completion-lilac)"/></g>
+              <g transform="rotate(180 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 200ms" fill="url(#completion-coral)"/></g>
+              <g transform="rotate(270 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 300ms" fill="url(#completion-mint)"/></g>
+              <circle class="completion-core" cx="120" cy="120" r="33" fill="#192540" stroke="#eff9ffa0" stroke-width="1.4"/>
+              <path class="completion-check" d="M105 120l10 10 21-22" fill="none" stroke="#efffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+            </svg>
           </span>
-          <span class="completion-title">시간이 되었어요</span>
+          <span class="completion-kicker">00:00</span>
+          <span class="completion-title">집중 완료</span>
+          <span class="completion-detail" id="completion-detail"></span>
           <span class="completion-hint">터치하면 종료 표시가 멈춰요</span>
         </span>
       </button>
@@ -805,6 +843,17 @@
         </button>
       </header>
       <div class="manager-content">
+        <section class="manager-section" aria-labelledby="completion-alert-heading">
+          <div class="section-heading">
+            <h3 id="completion-alert-heading">완료 알림</h3>
+            <p>타이머가 끝날 때 사용할 알림을 고르세요.</p>
+          </div>
+          <div class="alert-options">
+            <label class="setting-toggle" for="finish-sound"><span>완료 소리</span><input type="checkbox" id="finish-sound"></label>
+            <label class="setting-toggle" for="finish-vibration"><span>완료 진동</span><input type="checkbox" id="finish-vibration" aria-describedby="completion-alert-support"></label>
+          </div>
+          <p id="completion-alert-support"></p>
+        </section>
         <section class="manager-section" aria-labelledby="appearance-heading">
           <div class="section-heading">
             <h3 id="appearance-heading">나의 집중 화면</h3>
@@ -812,7 +861,7 @@
           </div>
           <label class="message-label" for="focus-message">타이머에 표시할 문구 · 비워두면 표시하지 않아요</label>
           <input type="text" id="focus-message" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="예. 지금은 이 일 하나만">
-          <div class="theme-grid" id="theme-grid" role="group" aria-label="숫자 테마 17개"></div>
+          <div class="theme-grid" id="theme-grid" role="group" aria-label="숫자 테마 20개"></div>
         </section>
         <section class="manager-section" aria-labelledby="presets-heading">
           <div class="section-heading">
@@ -824,7 +873,7 @@
         </section>
 
         <section class="manager-section" aria-labelledby="rotation-heading">
-          <label class="rotation-toggle" for="rotation-enabled">
+          <label class="setting-toggle" for="rotation-enabled">
             <span id="rotation-heading">회전으로 타이머 전환</span>
             <input type="checkbox" id="rotation-enabled" checked>
           </label>
@@ -874,6 +923,8 @@
       rotations: [10, 15, 30],
       message: '',
       theme: 'clean',
+      finishSound: false,
+      finishVibration: false,
     };
     const themes = [
       ['clean', '고요'], ['bold', '볼드'], ['mono', '모노'], ['classic', '클래식'],
@@ -882,6 +933,37 @@
       ['flip-dark', '플립 · 차콜'], ['flip-paper', '플립 · 크림'], ['flip-color', '플립 · 컬러'],
       ['flip-sunset', '플립 · 선셋'], ['flip-aurora', '플립 · 오로라'],
       ['watch-orange', '워치 · 오렌지'], ['watch-pastel', '워치 · 파스텔'],
+      ['watch-mosaic', '워치 · 모자이크'], ['watch-ribbon', '워치 · 리본'], ['watch-neon', '워치 · 네온믹스'],
+    ];
+    const watchFaces = {
+      'watch-orange': {
+        pattern: 'horizontal', background: ['#ff9563', '#c94906'], ink: ['#090b08', '#dbd9c5'],
+        layout: [[12, 24, 125, 182], [123, 20, 156, 132], [27, 214, 88, 88], [122, 150, 156, 150]],
+      },
+      'watch-mosaic': {
+        pattern: 'checker', background: ['#cde7ba', '#233e3d', '#e29d74', '#c8b3dc'], ink: ['#23453f', '#cde7ba', '#684839', '#443252'],
+        layout: [[18, 20, 130, 174], [155, 24, 124, 122], [26, 203, 108, 94], [150, 144, 128, 158]],
+      },
+      'watch-ribbon': {
+        pattern: 'diagonal', background: ['#eac7e8', '#ed876b', '#3c304a'], ink: ['#4d3156', '#452c3b', '#f6c58f'],
+        layout: [[16, 22, 102, 154], [128, 18, 148, 174], [24, 182, 92, 116], [128, 202, 148, 96]],
+      },
+      'watch-neon': {
+        pattern: 'vertical', background: ['#182b37', '#30223f', '#1c3940'], ink: ['#a9edff', '#f2bbe9', '#dbf2ae'],
+        layout: [[20, 18, 112, 142], [144, 18, 132, 198], [24, 164, 106, 138], [150, 226, 124, 76]],
+      },
+    };
+    const watchGlyphPaths = [
+      'M20 8H44Q56 8 56 20V76Q56 88 44 88H20Q8 88 8 76V20Q8 8 20 8Z',
+      'M10 26L34 8V88',
+      'M8 20Q8 8 20 8H44Q56 8 56 20V32Q56 42 44 46L20 54Q8 58 8 68V88H56',
+      'M8 8H44Q56 8 56 20V34Q56 48 42 48H22M42 48Q56 48 56 62V76Q56 88 44 88H8',
+      'M8 8V50H56M48 8V88',
+      'M56 8H8V46H42Q56 46 56 60V76Q56 88 44 88H8',
+      'M54 8H22Q8 8 8 22V76Q8 88 20 88H44Q56 88 56 76V60Q56 48 44 48H8',
+      'M8 8H56L24 88',
+      'M20 8H44Q56 8 56 20V34Q56 48 44 48H20Q8 48 8 34V20Q8 8 20 8ZM20 48H44Q56 48 56 62V76Q56 88 44 88H20Q8 88 8 76V62Q8 48 20 48Z',
+      'M56 48H20Q8 48 8 36V20Q8 8 20 8H44Q56 8 56 20V74Q56 88 42 88H10',
     ];
     const setup = document.getElementById('setup');
     const duration = document.getElementById('duration');
@@ -909,7 +991,13 @@
     const numberDisplay = document.getElementById('number-display');
     const minutesDisplay = document.getElementById('minutes-display');
     const secondsDisplay = document.getElementById('seconds-display');
+    const watchComposition = document.getElementById('watch-composition');
     const completion = document.getElementById('completion');
+    const completionParticles = document.getElementById('completion-particles');
+    const completionDetail = document.getElementById('completion-detail');
+    const finishSoundInput = document.getElementById('finish-sound');
+    const finishVibrationInput = document.getElementById('finish-vibration');
+    const completionAlertSupport = document.getElementById('completion-alert-support');
     const toggle = document.getElementById('toggle');
     const stop = document.getElementById('stop');
     const slotTabs = document.getElementById('slot-tabs');
@@ -955,9 +1043,13 @@
     let lastBeat = '';
     let completionTimeout;
     let completionUntil = 0;
+    let completionAudio = null;
+    let completionVibrating = false;
+    const completionSoundNodes = new Set();
     let fullscreenPending = false;
     let orientationLockOwned = false;
     let fullscreenInitialized = false;
+    let watchFaceCounter = 0;
     const slotButtons = [];
     const slotReadouts = [];
 
@@ -992,6 +1084,8 @@
           rotationEnabled: typeof saved.rotationEnabled === 'boolean' ? saved.rotationEnabled : true,
           message: typeof saved.message === 'string' ? saved.message.slice(0, 80).trim() : '',
           theme: themes.some(([id]) => id === saved.theme) ? saved.theme : defaults.theme,
+          finishSound: saved.finishSound === true,
+          finishVibration: saved.finishVibration === true,
         };
       } catch {
         return fallback;
@@ -1022,36 +1116,85 @@
       return element;
     }
 
+    function paintWatchPlanes(parent, pattern, colors) {
+      const planes = {
+        horizontal: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 166 },
+          { tag: 'rect', x: 0, y: 166, width: 300, height: 154 },
+        ],
+        checker: [
+          { tag: 'rect', x: 0, y: 0, width: 150, height: 166 },
+          { tag: 'rect', x: 150, y: 0, width: 150, height: 166 },
+          { tag: 'rect', x: 0, y: 166, width: 150, height: 154 },
+          { tag: 'rect', x: 150, y: 166, width: 150, height: 154 },
+        ],
+        diagonal: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 320 },
+          { tag: 'polygon', points: '0,0 300,0 300,75 0,210' },
+          { tag: 'polygon', points: '0,265 300,130 300,320 0,320' },
+        ],
+        vertical: [
+          { tag: 'rect', x: 0, y: 0, width: 300, height: 320 },
+          { tag: 'rect', x: 146, y: 0, width: 154, height: 320 },
+          { tag: 'polygon', points: '0,235 300,185 300,320 0,320' },
+        ],
+      };
+      planes[pattern].forEach((plane, index) => {
+        const { tag, ...attributes } = plane;
+        parent.append(svgNode(tag, { ...attributes, fill: colors[index] }));
+      });
+    }
+
+    function renderWatchFace(host, minutes, seconds, theme, countdown = false) {
+      const key = theme + ':' + minutes + ':' + seconds + ':' + countdown;
+      if (host.dataset.faceKey === key) return;
+      host.dataset.faceKey = key;
+      if (!host.dataset.faceId) host.dataset.faceId = 'watch-face-' + (++watchFaceCounter);
+      const faceId = host.dataset.faceId;
+      const config = watchFaces[theme];
+      const svg = svgNode('svg', { viewBox: '0 0 300 320', class: 'watch-face-svg', 'aria-hidden': 'true' });
+      const defs = svgNode('defs', {});
+      const clip = svgNode('clipPath', { id: faceId + '-clip' });
+      clip.append(svgNode('rect', { x: 0, y: 0, width: 300, height: 320, rx: 60, fill: 'white' }));
+      const mask = svgNode('mask', { id: faceId + '-digits', maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: 300, height: 320 });
+      let text = minutes + seconds;
+      let layout = config.layout;
+      if (countdown) {
+        text = seconds;
+        layout = text.length === 1 ? [[60, 28, 180, 264]] : [[30, 38, 110, 244], [158, 30, 114, 260]];
+      } else if (minutes.length === 3) {
+        layout = [[16, 20, 74, 182], [91, 18, 76, 136], [169, 20, 110, 132], ...config.layout.slice(2)];
+      }
+      Array.from(text).forEach((digit, index) => {
+        const [x, y, width, height] = layout[index];
+        const placement = svgNode('g', {
+          transform: 'translate(' + x + ' ' + y + ') scale(' + width / 64 + ' ' + height / 96 + ')',
+          'data-position': index,
+        });
+        placement.append(svgNode('path', {
+          d: watchGlyphPaths[Number(digit)], fill: 'none', stroke: 'white', 'stroke-width': 8,
+          'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        }));
+        mask.append(placement);
+      });
+      defs.append(clip, mask);
+      svg.append(defs);
+      const face = svgNode('g', { 'clip-path': 'url(#' + faceId + '-clip)' });
+      paintWatchPlanes(face, config.pattern, config.background);
+      const digits = svgNode('g', { mask: 'url(#' + faceId + '-digits)' });
+      // Shared color planes cross every digit, including the tall upper and lower numerals.
+      paintWatchPlanes(digits, config.pattern, config.ink);
+      face.append(digits, svgNode('rect', { x: 1, y: 1, width: 298, height: 318, rx: 59, fill: 'none', stroke: '#ffffff35', 'stroke-width': 1 }));
+      svg.append(face);
+      host.replaceChildren(svg);
+    }
+
     function renderDigits(container, text, theme) {
       const key = theme + ':' + text;
       const previousKey = container.dataset.digits || '';
       if (previousKey === key) return;
       container.dataset.digits = key;
       container.dataset.length = String(text.length);
-      if (theme === 'watch-orange') {
-        const paths = [
-          'M20 8H44Q56 8 56 20V76Q56 88 44 88H20Q8 88 8 76V20Q8 8 20 8Z',
-          'M10 26L34 8V88',
-          'M8 20Q8 8 20 8H44Q56 8 56 20V32Q56 42 44 46L20 54Q8 58 8 68V88H56',
-          'M8 8H44Q56 8 56 20V34Q56 48 42 48H22M42 48Q56 48 56 62V76Q56 88 44 88H8',
-          'M8 8V50H56M48 8V88',
-          'M56 8H8V46H42Q56 46 56 60V76Q56 88 44 88H8',
-          'M54 8H22Q8 8 8 22V76Q8 88 20 88H44Q56 88 56 76V60Q56 48 44 48H8',
-          'M8 8H56L24 88',
-          'M20 8H44Q56 8 56 20V34Q56 48 44 48H20Q8 48 8 34V20Q8 8 20 8ZM20 48H44Q56 48 56 62V76Q56 88 44 88H20Q8 88 8 76V62Q8 48 20 48Z',
-          'M56 48H20Q8 48 8 36V20Q8 8 20 8H44Q56 8 56 20V74Q56 88 42 88H10',
-        ];
-        const digits = Array.from(text, (value) => {
-          const svg = svgNode('svg', { viewBox: '0 0 64 96', class: 'watch-digit' });
-          svg.append(svgNode('path', {
-            d: paths[Number(value)], fill: 'none', stroke: 'currentColor', 'stroke-width': 8,
-            'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-          }));
-          return svg;
-        });
-        container.replaceChildren(...digits);
-        return;
-      }
       if (theme.startsWith('flip-')) {
         const previous = previousKey.startsWith(theme + ':') ? previousKey.slice(theme.length + 1) : null;
         renderFlipDigits(container, text, previous);
@@ -1147,14 +1290,22 @@
         preview.className = 'number-display theme-preview';
         preview.dataset.theme = id;
         preview.setAttribute('aria-hidden', 'true');
-        const first = document.createElement('span');
-        const last = document.createElement('span');
-        first.className = last.className = 'number-group';
-        const colon = document.createElement('span');
-        colon.className = 'number-colon';
-        renderDigits(first, '12', id);
-        renderDigits(last, '34', id);
-        preview.append(first, colon, last);
+        if (watchFaces[id]) {
+          preview.dataset.layout = 'composition';
+          const host = document.createElement('span');
+          host.className = 'watch-composition';
+          renderWatchFace(host, '10', '09', id);
+          preview.append(host);
+        } else {
+          const first = document.createElement('span');
+          const last = document.createElement('span');
+          first.className = last.className = 'number-group';
+          const colon = document.createElement('span');
+          colon.className = 'number-colon';
+          renderDigits(first, '12', id);
+          renderDigits(last, '34', id);
+          preview.append(first, colon, last);
+        }
         const label = document.createElement('span');
         label.textContent = name;
         button.append(preview, label);
@@ -1239,8 +1390,17 @@
       if (timer.remainingMs > 0 && timer.remainingMs <= 10000) urgency = 'countdown';
       focusView.dataset.urgency = urgency;
       numberDisplay.dataset.theme = settings.theme;
-      renderDigits(minutesDisplay, formatNumber(Math.floor(totalSeconds / 60)), settings.theme);
-      renderDigits(secondsDisplay, urgency === 'countdown' ? String(totalSeconds) : formatNumber(totalSeconds % 60), settings.theme);
+      const composed = Boolean(watchFaces[settings.theme]);
+      focusView.dataset.composed = String(composed);
+      numberDisplay.dataset.layout = composed ? 'composition' : 'standard';
+      watchComposition.hidden = !composed;
+      const minutes = formatNumber(Math.floor(totalSeconds / 60));
+      const seconds = urgency === 'countdown' ? String(totalSeconds) : formatNumber(totalSeconds % 60);
+      if (composed) renderWatchFace(watchComposition, minutes, seconds, settings.theme, urgency === 'countdown');
+      else {
+        renderDigits(minutesDisplay, minutes, settings.theme);
+        renderDigits(secondsDisplay, seconds, settings.theme);
+      }
       if (remaining.dataset.time !== time) {
         remaining.dataset.time = time;
         remaining.setAttribute('aria-label', '남은 시간 ' + Math.floor(totalSeconds / 60) + '분 ' + totalSeconds % 60 + '초');
@@ -1298,7 +1458,7 @@
       if (timers[activeIndex].state === 'done') {
         setControls(true);
         render();
-        showCompletion(deadline + 10000);
+        showCompletion(deadline + 10000, true);
       } else {
         renderTime();
       }
@@ -1369,19 +1529,72 @@
       clearTimeout(completionTimeout);
       completionUntil = 0;
       completion.hidden = true;
+      for (const oscillator of completionSoundNodes) {
+        try { oscillator.stop(); } catch {}
+      }
+      completionSoundNodes.clear();
+      if (completionVibrating) {
+        try { navigator.vibrate(0); } catch {}
+      }
+      completionVibrating = false;
     }
 
-    function showCompletion(until) {
-      dismissCompletion();
+    function prepareCompletionAudio() {
+      if (!settings.finishSound) return;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      try {
+        if (!completionAudio || completionAudio.state === 'closed') completionAudio = new AudioContextClass();
+        if (completionAudio.state !== 'running') completionAudio.resume().catch(() => {});
+      } catch {}
+    }
+
+    function playCompletionAlert() {
+      if (settings.finishVibration && typeof navigator.vibrate === 'function' && document.visibilityState === 'visible') {
+        try { completionVibrating = navigator.vibrate([120, 75, 120, 95, 220]); } catch {}
+      }
+      if (!settings.finishSound || completionAudio?.state !== 'running') return;
+      const firstNote = completionAudio.currentTime;
+      [392, 523.25, 659.25].forEach((frequency, index) => {
+        const startTime = firstNote + index * .13;
+        const oscillator = completionAudio.createOscillator();
+        const volume = completionAudio.createGain();
+        oscillator.type = 'triangle';
+        oscillator.frequency.value = frequency;
+        volume.gain.setValueAtTime(.0001, startTime);
+        volume.gain.exponentialRampToValueAtTime(.10, startTime + .03);
+        volume.gain.exponentialRampToValueAtTime(.0001, startTime + .65);
+        oscillator.connect(volume);
+        volume.connect(completionAudio.destination);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          volume.disconnect();
+          completionSoundNodes.delete(oscillator);
+        };
+        oscillator.start(startTime);
+        oscillator.stop(startTime + .66);
+        completionSoundNodes.add(oscillator);
+      });
+    }
+
+    function showCompletion(until, notify = false) {
       const remaining = until - Date.now();
-      if (remaining <= 0) return;
+      if (remaining <= 0) {
+        dismissCompletion();
+        return;
+      }
+      clearTimeout(completionTimeout);
       completionUntil = until;
+      setText(completionDetail, timers[activeIndex].totalMs / minuteMs + '분 타이머가 끝났어요');
       completion.hidden = document.visibilityState !== 'visible';
       if (!completion.hidden) completion.focus();
       completionTimeout = setTimeout(() => {
         dismissCompletion();
         focusTrigger.focus();
       }, remaining);
+      if (notify) {
+        try { playCompletionAlert(); } catch {}
+      }
     }
 
     function updateFocusLayout() {
@@ -1528,6 +1741,10 @@
 
     function openManager() {
       cancelPendingRotation();
+      finishSoundInput.checked = settings.finishSound;
+      finishVibrationInput.checked = settings.finishVibration;
+      finishVibrationInput.disabled = typeof navigator.vibrate !== 'function';
+      setText(completionAlertSupport, finishVibrationInput.disabled ? '이 브라우저에서는 진동이 지원되지 않아요.' : '');
       focusMessage.value = settings.message;
       draftTheme = settings.theme;
       renderThemeChoices();
@@ -1583,7 +1800,10 @@
         rotations,
         message: focusMessage.value.slice(0, 80).trim(),
         theme: draftTheme,
+        finishSound: finishSoundInput.checked,
+        finishVibration: finishVibrationInput.checked,
       };
+      prepareCompletionAudio();
       const saved = persistSettings();
       renderPresets();
       refreshDuration();
@@ -1623,6 +1843,8 @@
       if (pendingIndex === index) return;
       cancelPendingRotation();
       pendingIndex = index;
+      // Keep the fullscreen request in the orientation event, before the settling timeout.
+      enterFullscreen();
       // Wait for a settled position so passing through an angle does not start its timer.
       rotationTimeout = setTimeout(() => {
         pendingIndex = null;
@@ -1637,16 +1859,17 @@
     }
 
     function onScreenChange(event) {
+      const quarter = readScreenQuarter();
       if (event && (!sensorUsable || Date.now() - lastSensorAt >= 1500)) {
-        layoutPhysicalQuarter = readScreenQuarter();
+        layoutPhysicalQuarter = quarter;
       }
       updateFocusLayout();
-      if (manager.open || !settings.rotationEnabled) return;
+      if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible' ||
+          quarter === null || screenBaseline === null) return;
+      const index = normalizeQuarter(quarter - screenBaseline);
+      if (event && index !== 0 && !fullscreenInitialized) enterFullscreen();
       if (sensorUsable && Date.now() - lastSensorAt < 1500) return;
-      const quarter = readScreenQuarter();
-      if (quarter !== null && screenBaseline !== null) {
-        queueRotation(normalizeQuarter(quarter - screenBaseline));
-      }
+      queueRotation(index);
     }
 
     function onDeviceOrientation(event) {
@@ -1774,7 +1997,7 @@
         if (timer.state === 'done') {
           setControls(true);
           render();
-          showCompletion(deadline + 10000);
+          showCompletion(deadline + 10000, true);
           return;
         }
         clearInterval(interval);
@@ -1852,6 +2075,7 @@
     // A permitted first gesture prepares fullscreen while the timer is still waiting for rotation.
     document.addEventListener('click', (event) => {
       connectSensors();
+      prepareCompletionAudio();
       if (fullscreenInitialized) return;
       if (!event.target.closest?.('#fullscreen-toggle')) enterFullscreen();
     }, { capture: true });
@@ -1874,11 +2098,26 @@
         if (!sessionActive) sensorUsable = false;
       }
       else {
-        if (completionUntil) showCompletion(completionUntil);
+        if (completionUntil && completion.hidden) showCompletion(completionUntil);
         if (sessionActive) onScreenChange();
         else resetRotationBaseline();
       }
     });
+
+    const celebrationColors = ['#9af1ff', '#c1b0ff', '#ffb2d5', '#ffe39b', '#a7efcc', '#89baff'];
+    for (let index = 0; index < 48; index++) {
+      const particle = document.createElement('i');
+      particle.className = index % 3 === 0 ? 'spark' : 'confetti';
+      const angle = index * 137.508 * Math.PI / 180;
+      particle.style.setProperty('--dx', String(Math.cos(angle) * (1 + index % 4 * .14)));
+      particle.style.setProperty('--dy', String(Math.sin(angle) * (1 + index % 4 * .14)));
+      particle.style.setProperty('--spark-color', celebrationColors[index % celebrationColors.length]);
+      particle.style.setProperty('--size', 5 + index % 5 * 2 + 'px');
+      particle.style.setProperty('--duration', 2.7 + index % 5 * .16 + 's');
+      particle.style.setProperty('--delay', -(index % 9) * .33 + 's');
+      particle.style.setProperty('--twist', index % 2 === 0 ? '190deg' : '-160deg');
+      completionParticles.append(particle);
+    }
 
     duration.value = formatNumber(settings.normalMinutes);
     resetRotationBaseline();
