@@ -584,6 +584,10 @@
     .alert-options { display: grid; gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: var(--line); }
     .alert-options .setting-toggle { min-height: 52px; padding: 10px 14px; background: var(--panel); }
     #completion-alert-support:empty { display: none; }
+    .time-notice-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; background: var(--panel); }
+    .time-notice-row label { font-size: .8rem; font-weight: 650; }
+    .time-notice-row select.option-chip { width: 100%; max-width: none; }
+    .time-notice-row button { justify-content: center; padding-inline: 9px; white-space: nowrap; }
     .rotation-fields { display: grid; min-width: 0; gap: 0; padding: 0; margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
     .rotation-fields:disabled { opacity: .45; }
     .rotation-row { display: flex; min-height: 65px; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
@@ -1057,6 +1061,14 @@
           </div>
           <p id="completion-alert-support"></p>
         </section>
+        <section class="manager-section" aria-labelledby="time-notice-heading">
+          <div class="section-heading">
+            <h3 id="time-notice-heading">남은 시간 안내</h3>
+            <p>경과 시간과 남은 시간을 음성으로 듣거나, 음악을 한 번 재생할 수 있어요.</p>
+          </div>
+          <div class="alert-options" id="time-notice-options"></div>
+          <input type="file" id="time-notice-file" accept="audio/*,.mp3" hidden>
+        </section>
         <section class="manager-section" aria-labelledby="appearance-heading">
           <div class="section-heading">
             <h3 id="appearance-heading">나의 집중 화면</h3>
@@ -1158,6 +1170,7 @@
     const minuteMs = 60_000;
     const maxMinutes = 120;
     const storageKey = 'focus-timer.settings.v1';
+    const timeNoticeMinutes = [5, 3, 1];
     const defaults = {
       version: 1,
       normalMinutes: 5,
@@ -1168,6 +1181,7 @@
       theme: 'clean',
       finishSound: false,
       finishVibration: false,
+      timeNotices: {},
     };
     const themes = [
       ['clean', '고요'], ['bold', '볼드'], ['mono', '모노'], ['classic', '클래식'],
@@ -1241,11 +1255,14 @@
     const finishSoundInput = document.getElementById('finish-sound');
     const finishVibrationInput = document.getElementById('finish-vibration');
     const completionAlertSupport = document.getElementById('completion-alert-support');
+    const timeNoticeOptions = document.getElementById('time-notice-options');
+    const timeNoticeFile = document.getElementById('time-notice-file');
     const toggle = document.getElementById('toggle');
     const stop = document.getElementById('stop');
     const slotTabs = document.getElementById('slot-tabs');
     const screenLockStatus = document.getElementById('screen-lock-status');
     const manager = document.getElementById('manager');
+    const saveManagerButton = document.getElementById('save-manager');
     const presetEditor = document.getElementById('preset-editor');
     const addPreset = document.getElementById('add-preset');
     const rotationEnabled = document.getElementById('rotation-enabled');
@@ -1289,6 +1306,10 @@
     let completionAudio = null;
     let completionVibrating = false;
     const completionSoundNodes = new Set();
+    let timeNoticeDraft = null;
+    let timeNoticeFileMinute = null;
+    let timeNoticePlayer = null;
+    let timeNoticePlayback = null;
     let fullscreenPending = false;
     let orientationLockOwned = false;
     let fullscreenInitialized = false;
@@ -1392,7 +1413,7 @@
     const routineFigures = new Map();
     let figureLoopRunning = false;
     let figureLastFrame = 0;
-    // 음악: 파일은 IndexedDB에 두고, 이름 목록만 루틴 저장소에 둔다.
+    // 음악: 파일은 IndexedDB에 두고, 공유 보관함 목록은 루틴 저장소에 둔다.
     const trackBlobs = new Map();
     const trackUrls = new Map();
     const musicDbReady = openMusicDb();
@@ -1433,6 +1454,10 @@
           theme: themes.some(([id]) => id === saved.theme) ? saved.theme : defaults.theme,
           finishSound: saved.finishSound === true,
           finishVibration: saved.finishVibration === true,
+          timeNotices: Object.fromEntries(timeNoticeMinutes.map((minutes) => {
+            const choice = saved.timeNotices?.[minutes];
+            return [minutes, typeof choice === 'string' ? choice : ''];
+          })),
         };
       } catch {
         return fallback;
@@ -1804,18 +1829,21 @@
       if (timer.remainingMs === 0) {
         timer.state = 'done';
         clearInterval(interval);
+        stopTimeNotice();
       }
     }
 
     function tick() {
-      if (!sessionActive || timers[activeIndex].state !== 'running') return;
+      const timer = timers[activeIndex];
+      if (!sessionActive || timer.state !== 'running') return;
       syncTimer();
-      if (timers[activeIndex].state === 'done') {
+      if (timer.state === 'done') {
         setControls(true);
         render();
         showCompletion(deadline + 10000, true);
       } else {
         renderTime();
+        checkTimeNotice(timer);
       }
     }
 
@@ -1823,17 +1851,25 @@
       clearInterval(interval);
       dismissCompletion();
       const timer = timers[activeIndex];
+      const fresh = timer.state === 'ready' || timer.state === 'done';
       deadline = Date.now() + timer.remainingMs;
       timer.state = 'running';
       interval = setInterval(tick, 200);
       setControls(false);
       focusTrigger.focus();
       render();
+      if (fresh) {
+        timer.lastNoticeCheckMs = timer.remainingMs;
+        announceTimeNotice(timer, timer.totalMs / minuteMs);
+      } else {
+        checkTimeNotice(timer);
+      }
     }
 
     function switchTimer(index) {
       if (!sessionActive || !settings.rotationEnabled || index === activeIndex) return;
       dismissCompletion();
+      stopTimeNotice();
       syncTimer();
       clearInterval(interval);
       if (timers[activeIndex].state === 'running') timers[activeIndex].state = 'paused';
@@ -1902,6 +1938,89 @@
         if (!completionAudio || completionAudio.state === 'closed') completionAudio = new AudioContextClass();
         if (completionAudio.state !== 'running') completionAudio.resume().catch(() => {});
       } catch {}
+    }
+
+    function timeNoticeText(totalMs, remainingMs) {
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      const elapsedSeconds = totalMs / 1000 - remainingSeconds;
+      const elapsed = elapsedSeconds ? spokenDuration(elapsedSeconds) + ' 지났습니다.' : '타이머를 시작합니다.';
+      return elapsed + ' ' + spokenDuration(remainingSeconds) + ' 남았습니다.';
+    }
+
+    function announceTimeNotice(timer, minutes) {
+      const choice = settings.timeNotices[minutes];
+      if (choice) playTimeNotice(choice, timeNoticeText(timer.totalMs, timer.remainingMs));
+    }
+
+    function checkTimeNotice(timer) {
+      const previousMs = timer.lastNoticeCheckMs;
+      timer.lastNoticeCheckMs = timer.remainingMs;
+      // A delayed tick plays only the latest configured cue, within a minute of its threshold.
+      const minutes = timeNoticeMinutes.findLast((minutes) => {
+        const cueMs = minutes * minuteMs;
+        return settings.timeNotices[minutes] && previousMs > cueMs &&
+          timer.remainingMs <= cueMs && cueMs - timer.remainingMs < minuteMs;
+      });
+      if (minutes !== undefined) announceTimeNotice(timer, minutes);
+    }
+
+    function prepareTimeNoticeAudio() {
+      if (timeNoticePlayer) return;
+      // Prime the same audio element during a gesture with a silent WAV, then reuse it for cues.
+      const player = new Audio('data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==');
+      timeNoticePlayer = player;
+      player.play().catch(() => {
+        if (!timeNoticePlayback && player.src.startsWith('data:audio/wav')) timeNoticePlayer = null;
+      });
+    }
+
+    function stopTimeNotice() {
+      const playback = timeNoticePlayback;
+      if (!playback) return;
+      timeNoticePlayback = null;
+      if (playback.utterance) window.speechSynthesis?.cancel();
+      if (playback.player) {
+        playback.player.onended = playback.player.onerror = null;
+        playback.player.pause();
+      }
+    }
+
+    async function playTimeNotice(choice, text, onError) {
+      stopTimeNotice();
+      const playback = {};
+      timeNoticePlayback = playback;
+      function finished() {
+        if (timeNoticePlayback === playback) timeNoticePlayback = null;
+      }
+      function failed() {
+        if (timeNoticePlayback !== playback) return;
+        stopTimeNotice();
+        onError?.();
+      }
+      try {
+        if (choice === 'voice') {
+          const utterance = koreanUtterance(text);
+          playback.utterance = utterance;
+          utterance.onend = finished;
+          utterance.onerror = failed;
+          window.speechSynthesis.speak(utterance);
+        } else {
+          const url = trackUrls.get(choice) || await trackUrl(choice);
+          if (timeNoticePlayback !== playback) return;
+          if (!url) {
+            failed();
+            return;
+          }
+          const player = timeNoticePlayer ??= new Audio();
+          playback.player = player;
+          player.src = url;
+          player.onended = finished;
+          player.onerror = failed;
+          await player.play();
+        }
+      } catch {
+        failed();
+      }
     }
 
     function playCompletionAlert() {
@@ -2094,12 +2213,92 @@
       updateSensorStatus();
     }
 
+    function renderTimeNoticeChoices() {
+      const voiceSupported = !!window.speechSynthesis && typeof SpeechSynthesisUtterance === 'function';
+      for (const { minutes, select, preview } of timeNoticeRows) {
+        const voice = new Option(voiceSupported ? '음성 안내 (TTS)' : '음성 안내 (지원되지 않음)', 'voice');
+        voice.disabled = !voiceSupported;
+        select.replaceChildren(new Option('사용 안 함', ''), voice,
+          ...routineStore.tracks.map(({ id, name }) => new Option('♪ ' + name, id)),
+          new Option('+ 음악 파일 선택…', '+'));
+        select.value = timeNoticeDraft[minutes] || '';
+        if (select.selectedIndex === -1) select.value = '';
+        timeNoticeDraft[minutes] = select.value;
+        preview.disabled = !select.value || (select.value === 'voice' && !voiceSupported);
+      }
+    }
+
+    function createTimeNoticeRow(minutes) {
+      const row = el('div', 'time-notice-row');
+      const label = el('label', '', minutes + '분 전');
+      const select = el('select', 'option-chip');
+      select.id = label.htmlFor = 'time-notice-' + minutes;
+      const preview = el('button', 'option-chip', '미리 듣기');
+      preview.type = 'button';
+      preview.setAttribute('aria-label', minutes + '분 전 안내 미리 듣기');
+      select.addEventListener('change', () => {
+        stopTimeNotice();
+        if (select.value === '+') {
+          select.value = timeNoticeDraft[minutes];
+          if (saveManagerButton.disabled) return;
+          timeNoticeFileMinute = minutes;
+          timeNoticeFile.value = '';
+          timeNoticeFile.click();
+        } else {
+          timeNoticeDraft[minutes] = select.value;
+          preview.disabled = !select.value;
+          if (select.value && select.value !== 'voice') trackUrl(select.value).catch(() => {});
+        }
+      });
+      preview.addEventListener('click', () => {
+        managerMessage.removeAttribute('data-error');
+        setText(managerMessage, '');
+        const choice = timeNoticeDraft[minutes];
+        if (choice !== 'voice') prepareTimeNoticeAudio();
+        const totalMinutes = Math.max(minutes, readMinutes(duration.value) || settings.normalMinutes);
+        playTimeNotice(choice, timeNoticeText(totalMinutes * minuteMs, minutes * minuteMs), () => {
+          managerMessage.setAttribute('data-error', '');
+          setText(managerMessage, choice === 'voice' ? '음성 안내를 재생할 수 없어요.' : '음악을 재생할 수 없어요. 파일을 다시 골라 주세요.');
+        });
+      });
+      row.append(label, select, preview);
+      timeNoticeOptions.append(row);
+      return { minutes, select, preview };
+    }
+
+    async function onTimeNoticeFile() {
+      const file = timeNoticeFile.files[0];
+      const minutes = timeNoticeFileMinute;
+      const draft = timeNoticeDraft;
+      if (!file || minutes === null || !manager.open || !draft) return;
+      const error = trackFileError(file);
+      managerMessage.toggleAttribute('data-error', !!error);
+      setText(managerMessage, error);
+      if (error) return;
+
+      saveManagerButton.disabled = true;
+      const { id, stored } = await addTrack(file);
+      if (!manager.open || timeNoticeDraft !== draft) {
+        pruneTracks();
+        return;
+      }
+      saveManagerButton.disabled = false;
+      draft[minutes] = id;
+      trackUrl(id).catch(() => {});
+      renderTimeNoticeChoices();
+      if (!stored) setText(managerMessage, '이 환경에서는 음악 파일을 저장할 수 없어, 창을 닫으면 다시 골라야 해요.');
+    }
+
     function openManager() {
       cancelPendingRotation();
       finishSoundInput.checked = settings.finishSound;
       finishVibrationInput.checked = settings.finishVibration;
       finishVibrationInput.disabled = typeof navigator.vibrate !== 'function';
       setText(completionAlertSupport, finishVibrationInput.disabled ? '이 브라우저에서는 진동이 지원되지 않아요.' : '');
+      timeNoticeDraft = { ...settings.timeNotices };
+      timeNoticeFileMinute = null;
+      saveManagerButton.disabled = false;
+      renderTimeNoticeChoices();
       focusMessage.value = settings.message;
       draftTheme = settings.theme;
       renderThemeChoices();
@@ -2126,6 +2325,7 @@
     }
 
     function saveManager() {
+      if (saveManagerButton.disabled) return;
       const presetInputs = Array.from(presetEditor.querySelectorAll('input'));
       const newPresets = presetInputs.map((input) => readMinutes(input.value));
       const invalidPreset = newPresets.indexOf(0);
@@ -2157,9 +2357,13 @@
         theme: draftTheme,
         finishSound: finishSoundInput.checked,
         finishVibration: finishVibrationInput.checked,
+        timeNotices: timeNoticeDraft,
       };
       prepareCompletionAudio();
-      const saved = persistSettings();
+      const hasNoticeMusic = Object.values(settings.timeNotices).some((choice) => choice && choice !== 'voice');
+      if (hasNoticeMusic) prepareTimeNoticeAudio();
+      const musicSaved = !hasNoticeMusic || persistRoutineStore();
+      const saved = persistSettings() && musicSaved;
       renderPresets();
       refreshDuration();
       setText(setupNote, saved ? '설정을 저장했어요.' : '설정을 적용했어요. 이 환경에서는 다시 열면 설정이 초기화될 수 있어요.');
@@ -2350,6 +2554,7 @@
       }
       const timer = timers[activeIndex];
       if (timer.state === 'running') {
+        stopTimeNotice();
         syncTimer();
         if (timer.state === 'done') {
           setControls(true);
@@ -2384,6 +2589,7 @@
       clearInterval(interval);
       cancelPendingRotation();
       dismissCompletion();
+      stopTimeNotice();
       sessionActive = false;
       timers = [];
       activeIndex = 0;
@@ -2395,11 +2601,13 @@
       start.focus();
     });
 
+    const timeNoticeRows = timeNoticeMinutes.map(createTimeNoticeRow);
+    timeNoticeFile.addEventListener('change', onTimeNoticeFile);
     document.getElementById('open-manager').addEventListener('click', openManager);
     summary.addEventListener('click', openManager);
     document.getElementById('close-manager').addEventListener('click', () => manager.close());
     document.getElementById('cancel-manager').addEventListener('click', () => manager.close());
-    document.getElementById('save-manager').addEventListener('click', saveManager);
+    saveManagerButton.addEventListener('click', saveManager);
     addPreset.addEventListener('click', () => {
       const values = presetDraft();
       if (values.length >= 10) return;
@@ -2410,6 +2618,9 @@
     rotationEnabled.addEventListener('change', updateRotationFields);
     sensorConnect.addEventListener('click', () => connectSensors(true));
     manager.addEventListener('close', () => {
+      stopTimeNotice();
+      timeNoticeDraft = null;
+      pruneTracks();
       if (!sessionActive) resetRotationBaseline();
     });
     manager.addEventListener('input', (event) => {
@@ -2433,6 +2644,7 @@
     document.addEventListener('click', (event) => {
       connectSensors();
       prepareCompletionAudio();
+      if (Object.values(settings.timeNotices).some((choice) => choice && choice !== 'voice')) prepareTimeNoticeAudio();
       if (fullscreenInitialized) return;
       if (!event.target.closest?.('#fullscreen-toggle')) enterFullscreen();
     }, { capture: true });
@@ -2791,14 +3003,19 @@
       for (const [frequency, offset, length] of cue.tones) playTone(frequency, offset, length);
     }
 
+    function koreanUtterance(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 1.05;
+      return utterance;
+    }
+
     function speak(text) {
       const synth = window.speechSynthesis;
       if (!routineStore.voice || !synth || typeof SpeechSynthesisUtterance !== 'function') return;
       try {
         if (synth.speaking || synth.pending) synth.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ko-KR';
-        utterance.rate = 1.05;
+        const utterance = koreanUtterance(text);
         // 안내하는 동안에는 음악 소리를 줄였다가 끝나면 되돌린다.
         if (musicPlayer) {
           musicPlayer.volume = .3;
@@ -3225,7 +3442,7 @@
       if (run.figure) run.figure.paused = run.state === 'paused';
     }
 
-    // ── 단계별 음악 ──
+    // ── 음악 보관함과 단계별 재생 ──
     function openMusicDb() {
       return new Promise((resolve) => {
         try {
@@ -3247,21 +3464,34 @@
       });
     }
 
+    function trackFileError(file) {
+      if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name)) {
+        return '음악 파일(MP3 등)만 고를 수 있어요.';
+      }
+      if (file.size > maxTrackBytes) return '40MB보다 큰 파일은 쓸 수 없어요.';
+      return '';
+    }
+
     /** 고른 음악 파일을 보관함에 넣는다. stored가 false면 이번 실행 동안만 유지된다. */
     async function addTrack(file) {
       const id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      trackBlobs.set(id, file);
-      routineStore.tracks.push({ id, name: file.name.replace(/\.[^.]+$/, '').slice(0, 40) });
       const db = await musicDbReady;
       let stored = false;
       if (db) {
         try {
-          await idbResult(db.transaction('tracks', 'readwrite').objectStore('tracks').put(file, id));
+          const transaction = db.transaction('tracks', 'readwrite');
+          await new Promise((resolve, reject) => {
+            transaction.oncomplete = resolve;
+            transaction.onabort = () => reject(transaction.error);
+            transaction.objectStore('tracks').put(file, id);
+          });
           stored = true;
         } catch {
           // 용량 부족 등으로 저장에 실패하면 메모리에만 둔다.
         }
       }
+      trackBlobs.set(id, file);
+      routineStore.tracks.push({ id, name: file.name.replace(/\.[^.]+$/, '').slice(0, 40) });
       return { id, stored };
     }
 
@@ -3339,9 +3569,16 @@
       try { musicPlayer.currentTime = 0; } catch { /* 아직 읽지 못한 파일은 되감을 수 없다. */ }
     }
 
-    /** 어느 루틴에서도 쓰지 않는 음악 파일을 보관함에서 지운다. */
+    /** 루틴과 집중 타이머 안내에서 쓰지 않는 음악을 보관함에서 지운다. */
     function pruneTracks() {
       const used = new Set(routineStore.routines.flatMap((routine) => routine.steps.map((step) => step.musicId)));
+      for (const choice of Object.values(settings.timeNotices)) used.add(choice);
+      if (manager.open && timeNoticeDraft) {
+        for (const choice of Object.values(timeNoticeDraft)) used.add(choice);
+      }
+      if (routineEditor.open) {
+        for (const step of editorDraft.steps) used.add(step.musicId);
+      }
       const unused = routineStore.tracks.filter((track) => !used.has(track.id));
       if (!unused.length) return;
       routineStore.tracks = routineStore.tracks.filter((track) => used.has(track.id));
@@ -3503,15 +3740,16 @@
       const file = musicFile.files[0];
       const step = musicTarget;
       if (!file || !step) return;
-      if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name)) {
-        editorNotice('음악 파일(MP3 등)만 고를 수 있어요.', true);
-        return;
-      }
-      if (file.size > maxTrackBytes) {
-        editorNotice('40MB보다 큰 파일은 쓸 수 없어요.', true);
+      const error = trackFileError(file);
+      if (error) {
+        editorNotice(error, true);
         return;
       }
       const { id, stored } = await addTrack(file);
+      if (!routineEditor.open || !editorDraft.steps.includes(step)) {
+        pruneTracks();
+        return;
+      }
       step.musicId = id;
       renderStepEditor();
       if (!stored) editorNotice('이 환경에서는 음악 파일을 저장할 수 없어, 창을 닫으면 다시 골라야 해요.', false);
@@ -3764,6 +4002,9 @@
     }
 
     duration.value = formatNumber(settings.normalMinutes);
+    for (const choice of Object.values(settings.timeNotices)) {
+      if (choice && choice !== 'voice') trackUrl(choice).catch(() => {});
+    }
     resetRotationBaseline();
     renderPresets();
     refreshDuration();
