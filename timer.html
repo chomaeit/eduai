@@ -3,19 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0c100f">
+  <meta name="theme-color" content="#0e0e0d">
   <title>집중 타이머</title>
 
   <style>
+    /* 색 변수로 등록해야 구간 색이 끊기지 않고 서서히 바뀐다. */
+    @property --stage-color { syntax: "<color>"; inherits: true; initial-value: #bc9af7; }
+
     :root {
       color-scheme: dark;
-      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
-      color: #edf1e9;
-      background: #0c100f;
-      --muted: #a3b3a9;
-      --accent: #bee7c9;
-      --line: #34433c;
-      --panel: #17201c;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+      color: #f1efe8;
+      background: #0e0e0d;
+      --paper: #f1efe8;
+      --ink: #0e0e0d;
+      --muted: #96958d;
+      --accent: #ff5f2e;
+      --rest: #8fc7ff;
+      --line: #2b2b28;
+      --panel: #191918;
+      /* 숫자 전용 글꼴: 기기에 설치된 DIN 계열을 우선 사용 */
+      --numeric: "Bahnschrift", "DIN Alternate", "Roboto Condensed", system-ui, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -26,36 +34,34 @@
       min-height: 100vh;
       min-height: 100svh;
       margin: 0;
-      place-items: center;
-      background: radial-gradient(ellipse at 50% 10%, #1d2b24, #0c100f 70%);
+      place-items: start center;
+      background: #0e0e0d;
     }
 
+    /* 머리줄은 위에 고정하고, 아래 패널만 남은 공간에서 정렬한다. */
     .setup {
       display: grid;
+      grid-template-rows: auto 1fr;
       justify-items: center;
       gap: clamp(14px, 3.5svh, 30px);
       width: min(100%, 440px);
+      min-height: 100vh;
+      min-height: 100svh;
       margin: 0;
-      padding: 28px 18px;
+      padding: 18px 18px 28px;
       text-align: center;
     }
 
-    .setup-header { position: relative; display: grid; width: 100%; justify-items: center; gap: 9px; }
+    .setup-header { display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; }
 
-    .setup-header svg {
-      width: 28px;
-      height: 28px;
-      fill: none;
-      stroke: var(--accent);
-      stroke-width: 1.4;
-    }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(1.25rem, 5vw, 1.6rem);
-      font-weight: 650;
-      letter-spacing: -.04em;
-    }
+    .mode-switch { display: inline-grid; grid-auto-columns: 1fr; grid-auto-flow: column; padding: 3px; border-radius: 12px; background: var(--panel); }
+    .mode-tab { min-width: 78px; min-height: 38px; padding: 4px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-size: .9rem; font-weight: 650; }
+    .mode-tab:hover { color: var(--paper); }
+    .mode-tab[aria-pressed="true"] { background: var(--paper); color: var(--ink); }
+
+    .focus-panel { display: grid; width: 100%; align-content: center; justify-items: center; gap: clamp(14px, 3.5svh, 30px); }
 
     .dial {
       position: relative;
@@ -72,14 +78,14 @@
       z-index: -1;
       inset: 9%;
       border-radius: 50%;
-      background: radial-gradient(circle at 50% 35%, #18251e, #111815 75%);
+      background: #131312;
       content: "";
     }
 
     .dial svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; }
-    .ticks { stroke: #44594e; stroke-width: 3; stroke-dasharray: .12 .88; }
-    .major-ticks { stroke: #7a9485; stroke-width: 6; stroke-dasharray: .023 .977; }
-    .track { stroke: #32443b; stroke-width: 2; }
+    .ticks { stroke: #3a3a36; stroke-width: 3; stroke-dasharray: .12 .88; }
+    .major-ticks { stroke: #77766f; stroke-width: 6; stroke-dasharray: .023 .977; }
+    .track { stroke: #2b2b28; stroke-width: 2; }
     .setup-dial { width: min(76vw, 272px); }
 
     .duration-field {
@@ -103,10 +109,11 @@
       color: inherit;
       caret-color: var(--accent);
       font: inherit;
-      font-size: clamp(2.75rem, 15vw, 4.75rem);
-      font-weight: 400;
+      font-family: var(--numeric);
+      font-size: clamp(3rem, 16vw, 5rem);
+      font-weight: 500;
       line-height: 1;
-      letter-spacing: -.065em;
+      letter-spacing: -.02em;
       text-align: center;
     }
 
@@ -140,19 +147,21 @@
     .preset, .control {
       min-height: 46px;
       padding: 6px 4px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
+      border: 1px solid transparent;
+      border-radius: 10px;
       background: var(--panel);
       font-size: .86rem;
       font-weight: 650;
+      font-variant-numeric: tabular-nums;
     }
 
-    .preset:hover, .control:hover { border-color: #819e8e; }
+    .preset:hover, .control:hover { border-color: #6d6c66; }
 
+    /* 선택된 항목은 색조 대신 명암 반전으로 표시한다. */
     .preset[aria-pressed="true"] {
-      border-color: #759985;
-      color: var(--accent);
-      background: #25392e;
+      border-color: var(--paper);
+      color: var(--ink);
+      background: var(--paper);
     }
 
     .primary {
@@ -165,12 +174,12 @@
       border: 1px solid transparent;
       border-radius: 12px;
       background: var(--accent);
-      color: #15271e;
+      color: #120c09;
       font-size: .95rem;
       font-weight: 750;
     }
 
-    .primary:hover { background: #d2f0d9; }
+    .primary:hover { background: #ff7d54; }
     .primary svg { width: 13px; height: 13px; fill: currentColor; }
 
     .setup-note {
@@ -178,7 +187,7 @@
       margin: 3px 0 0;
     }
 
-    .setup-note[data-error] { color: #ffc9b5; }
+    .setup-note[data-error] { color: #ff9f9f; }
 
     .focus-view {
       position: fixed;
@@ -188,7 +197,7 @@
       padding: env(safe-area-inset-top) env(safe-area-inset-right)
                env(safe-area-inset-bottom) env(safe-area-inset-left);
       overflow: hidden;
-      background: radial-gradient(circle at center, #151e19, #0a0e0c 72%);
+      background: #0a0a09;
     }
 
     .focus-view:fullscreen { width: 100%; height: 100%; }
@@ -240,7 +249,11 @@
       stroke-dashoffset: 0;
     }
 
-    .quarter-arcs { stroke-width: 4; }
+    /* 링 전체를 그라데이션으로 칠하고, 구간이 바뀌면 색 조합이 부드럽게 넘어간다. */
+    .quarter-arcs { stroke-width: 5; }
+    #stage-gradient stop { transition: stop-color 1.4s ease; }
+    .focus-stage { transition: --stage-color 1.4s ease; }
+    .focus-dial::before { background: radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--stage-color) 18%, #131312), #131312 72%); }
     .rainbow-arc { stroke: url(#rainbow-gradient); stroke-width: 4; opacity: 0; }
     .focus-view[data-urgency="rainbow"] .rainbow-arc,
     .focus-view[data-urgency="countdown"] .rainbow-arc { opacity: 1; animation: rainbow-flow 5s linear infinite; }
@@ -250,7 +263,7 @@
     .focus-view[data-state="paused"] .ring-colors { opacity: .55; }
     .focus-view[data-state="paused"] .rainbow-arc { animation-play-state: paused; }
     .focus-view[data-state="done"] .ring-colors { visibility: hidden; }
-    .focus-view[data-state="done"] .track { stroke: #658b74; }
+    .focus-view[data-state="done"] .track { stroke: #77766f; }
 
     .readout {
       position: absolute;
@@ -283,7 +296,7 @@
       border: 0;
       border-radius: 16px;
       background: transparent;
-      color: #edf1e9;
+      color: #f1efe8;
       font: inherit;
       letter-spacing: inherit;
       line-height: 1;
@@ -368,10 +381,6 @@
     .focus-view[data-theme="watch-pastel"] .progress { stroke-width: 12; }
     .focus-view[data-theme="watch-pastel"] .quarter-arcs,
     .focus-view[data-theme="watch-pastel"] .rainbow-arc { stroke-width: 10; }
-    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(1) { stroke: #bdc0f0; }
-    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(2) { stroke: #a9dbe8; }
-    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(3) { stroke: #b5ded5; }
-    .focus-view[data-theme="watch-pastel"] .quarter-arcs path:nth-child(4) { stroke: #e7c6db; }
     .focus-view[data-theme="watch-pastel"] .pastel-marker { display: block; fill: #428fd5; stroke: #eff9ff; stroke-width: .8; }
     .focus-view[data-theme="watch-pastel"][data-state="done"] .pastel-marker { display: none; }
     .focus-view[data-theme="watch-pastel"] .time-button { color: #3593ed; }
@@ -401,7 +410,7 @@
       width: 68%;
       transform: translateX(-50%);
       margin: 0;
-      color: #cad9ce;
+      color: #c9c7bf;
       font-family: inherit;
       font-size: clamp(.9rem, 4cqi, 1.7rem);
       font-weight: 400;
@@ -443,7 +452,7 @@
     .focus-controls button {
       min-height: 46px;
       pointer-events: auto;
-      box-shadow: 0 4px 14px #0a0e0c80;
+      box-shadow: 0 4px 14px #00000080;
     }
 
     .lock-status {
@@ -466,27 +475,28 @@
       background: var(--panel);
     }
 
-    .menu-button { position: absolute; top: 0; right: 0; }
-    .menu-button svg, .icon-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; }
-    .menu-button:hover, .icon-button:hover { border-color: #819e8e; }
+    .menu-button { border-color: transparent; }
+    .menu-button svg, .icon-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .menu-button:hover, .icon-button:hover { border-color: #6d6c66; }
     button:disabled { opacity: .45; cursor: default; }
 
+    /* 박스 대신 위아래 가는 선만 둔 한 줄 요약 */
     .rotation-summary {
       display: grid;
       width: 100%;
-      gap: 9px;
-      padding: 12px 10px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: #121b16;
+      gap: 7px;
+      padding: 12px 2px;
+      border: 0;
+      border-block: 1px solid var(--line);
+      background: transparent;
       color: var(--muted);
-      font-size: .74rem;
-      text-align: center;
+      font-size: .76rem;
+      text-align: left;
     }
 
-    .rotation-summary:hover { border-color: #819e8e; }
-    .rotation-summary strong { color: var(--accent); font-size: .78rem; font-weight: 600; }
-    .summary-times { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 5px 10px; }
+    .rotation-summary:hover { border-color: #6d6c66; }
+    .rotation-summary strong { color: var(--paper); font-size: .8rem; font-weight: 600; }
+    .summary-times { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 10px; font-variant-numeric: tabular-nums; }
     .rotation-ready { display: grid; justify-items: center; gap: 6px; }
     .rotation-ready p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.6; }
 
@@ -504,28 +514,28 @@
       padding: 8px 3px;
       border: 1px solid var(--line);
       border-radius: 11px;
-      background: #131d17;
+      background: #141413;
       font-size: .74rem;
     }
 
     .slot-tab span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
-    .slot-tab[aria-pressed="true"] { border-color: #91b39e; color: var(--accent); background: #25392e; }
+    .slot-tab[aria-pressed="true"] { border-color: #c9c7bf; color: var(--accent); background: #262624; }
 
     .manager {
       width: min(100% - 24px, 540px);
       max-height: calc(100vh - 32px);
       max-height: calc(100dvh - 32px);
       padding: 0;
-      border: 1px solid #4b6153;
-      border-radius: 24px;
-      background: #111a15;
+      border: 1px solid #33332f;
+      border-radius: 16px;
+      background: #131312;
       color: inherit;
       box-shadow: 0 24px 100px #0008;
       overflow-y: auto;
       overscroll-behavior: contain;
     }
 
-    .manager::backdrop { background: #050a07cc; }
+    .manager::backdrop { background: #000000cc; }
     body:has(.manager[open]) { overflow: hidden; }
 
     .manager-header, .manager-footer {
@@ -536,7 +546,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 18px 22px;
-      background: #111a15;
+      background: #131312;
     }
 
     .manager-header { top: 0; border-bottom: 1px solid var(--line); }
@@ -556,8 +566,8 @@
       padding: 6px;
       border: 1px solid transparent;
       border-radius: 8px;
-      background: #0d1510;
-      color: #edf1e9;
+      background: #0a0a09;
+      color: #f1efe8;
       font: inherit;
       font-size: 1rem;
       text-align: center;
@@ -566,10 +576,19 @@
 
     .manager input[aria-invalid="true"] { border-color: #e0a28b; }
     .remove-preset { width: 40px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.25rem; }
-    .remove-preset:hover { color: #ffc9b5; background: #30251e; }
-    .add-preset { background: transparent; color: var(--accent); }
-    .rotation-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 650; font-size: .93rem; cursor: pointer; }
-    .rotation-toggle input { width: 22px; height: 22px; margin: 0; accent-color: #bee7c9; cursor: pointer; }
+    .remove-preset:hover { color: #ff9f9f; background: #2a1c18; }
+    .add-preset { border: 1px dashed #ff5f2e73; background: #ff5f2e12; color: var(--accent); transition: background-color .15s, border-color .15s; }
+    .control.add-preset:hover:not(:disabled) { border-style: solid; border-color: var(--accent); background: #ff5f2e26; }
+    .setting-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 650; font-size: .93rem; cursor: pointer; }
+    .setting-toggle input { width: 22px; height: 22px; margin: 0; accent-color: #ff5f2e; cursor: pointer; }
+    .alert-options { display: grid; gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: var(--line); }
+    .alert-options .setting-toggle { min-height: 52px; padding: 10px 14px; background: var(--panel); }
+    #completion-alert-support:empty { display: none; }
+    .time-notice-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; background: var(--panel); }
+    .time-notice-row label { display: flex; gap: 5px; align-items: center; font-size: .8rem; font-weight: 650; white-space: nowrap; }
+    .time-notice-row input[type="text"] { width: 42px; }
+    .time-notice-row select.option-chip { width: 100%; max-width: none; }
+    .time-notice-row button { justify-content: center; padding-inline: 9px; white-space: nowrap; }
     .rotation-fields { display: grid; min-width: 0; gap: 0; padding: 0; margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
     .rotation-fields:disabled { opacity: .45; }
     .rotation-row { display: flex; min-height: 65px; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
@@ -582,17 +601,18 @@
     .angle-270 { transform: rotate(270deg); }
     .normal-value { color: var(--accent); font-size: .82rem; }
     .sensor-area { display: grid; gap: 9px; }
-    .sensor-connect { justify-self: start; min-height: 40px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--accent); font-size: .77rem; }
+    .sensor-connect { justify-self: start; min-height: 40px; padding: 7px 16px; border: 1px solid #ff5f2e59; border-radius: 99px; background: #ff5f2e1a; color: var(--accent); font-size: .78rem; font-weight: 650; transition: background-color .15s, border-color .15s; }
+    .sensor-connect:hover:not(:disabled) { border-color: var(--accent); background: #ff5f2e2e; }
     .manager-footer { bottom: 0; display: grid; grid-template-columns: 1fr 2fr; border-top: 1px solid var(--line); }
     .manager-message { grid-column: 1 / -1; }
     .manager-message:empty { display: none; }
-    .manager .manager-message[data-error] { color: #ffc9b5; }
+    .manager .manager-message[data-error] { color: #ff9f9f; }
 
     .manager input#focus-message { width: 100%; padding-inline: 12px; text-align: left; }
     .message-label { color: var(--muted); font-size: .8rem; }
     .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .theme-card { display: grid; min-height: 90px; gap: 10px; padding: 14px 5px 10px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); }
-    .theme-card[aria-pressed="true"] { color: var(--accent); border-color: #95b7a1; background: #25392e; }
+    .theme-card[aria-pressed="true"] { color: var(--accent); border-color: #c9c7bf; background: #262624; }
     .theme-card > span:last-child { color: var(--muted); font-size: .73rem; }
     .theme-preview { font-size: 27px; }
 
@@ -607,33 +627,184 @@
       overflow: hidden;
       place-items: center;
       border: 0;
-      background: radial-gradient(ellipse at 50% 35%, #282c56, #0b1025 70%);
+      background: #0e0e0d;
       color: #edfbff;
       isolation: isolate;
       -webkit-tap-highlight-color: transparent;
     }
 
     .completion-content { position: relative; z-index: 2; display: grid; justify-items: center; gap: 14px; pointer-events: none; }
-    .completion-glow { position: absolute; z-index: -1; inset: -60%; background: conic-gradient(from 30deg, #35d4e900, #45d5ee80, #9895ff70, #f087d080, #edc26f50, #35d4e900); filter: blur(45px); animation: celebration-spin 24s linear infinite; pointer-events: none; }
-    .completion-rays { position: absolute; width: 150vmax; height: 150vmax; background: repeating-conic-gradient(from 0deg, #a9bfff28 0deg 1deg, transparent 1.5deg 12deg); mask-image: radial-gradient(circle, transparent 5%, black 19%, transparent 49%); animation: celebration-spin 40s linear infinite; pointer-events: none; }
-    .completion-symbol { position: relative; display: grid; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #c0eaff35, #9a8dff12 60%, transparent 72%); place-items: center; }
-    .completion-symbol::before, .completion-symbol::after, .completion-wave { position: absolute; inset: 4%; border: 2px solid #95eaff; border-radius: 50%; box-shadow: 0 0 16px #7eafff60, inset 0 0 20px #9a8eff25; animation: completion-wave 2.7s ease-out infinite; content: ""; }
-    .completion-symbol::after { border-color: #d7b0ff; animation-delay: -.9s; }
-    .completion-wave { border-color: #ffbfdb; animation-delay: -1.8s; }
-    .completion-symbol svg { width: 44%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 10px #9ce9ff); animation: bell-sway 1.6s ease-in-out infinite; transform-origin: 50% 20%; }
+    .completion-symbol { display: block; width: var(--alarm-size, min(54vw, 35vh, 240px)); aspect-ratio: 1; }
+    .completion-symbol svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .completion-petal { transform-origin: 120px 120px; animation: completion-bloom .85s cubic-bezier(.16, 1, .3, 1) var(--bloom-delay, 0ms) both; }
+    .completion-orbit { transform-origin: 120px 120px; animation: celebration-spin 24s linear infinite; }
+    .completion-core { filter: drop-shadow(0 0 9px #a8ddff70); }
+    .completion-check { animation: completion-check .55s ease-out .55s both; }
     .completion-kicker { color: #c8dbff; font: 500 .78rem system-ui, sans-serif; letter-spacing: .25em; }
-    .completion-title { background: linear-gradient(100deg, #b6f6ff, #e4c3ff, #ffd0dc, #ffe5ad, #b6f6ff); background-size: 300% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; letter-spacing: -.055em; animation: aurora-drift 6s linear infinite; }
+    .completion-title { color: #f1efe8; font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; letter-spacing: -.055em; }
     .completion-detail { color: #d9ddf0; font-size: .9rem; }
     .completion-hint { margin-top: 6px; padding: 8px 15px; border: 1px solid #d9e0ff35; border-radius: 99px; color: #c2cbe2; font-size: .78rem; }
     .completion-particles { position: absolute; inset: 0; pointer-events: none; --burst-radius: min(42vmin, 300px); }
-    .completion-particles i { position: absolute; top: 44%; left: 50%; width: var(--size); height: var(--size); background: var(--spark-color); color: var(--spark-color); box-shadow: 0 0 12px currentColor; opacity: 0; animation: celebration-burst var(--duration) cubic-bezier(.12, .6, .3, 1) var(--delay) infinite; }
+    .completion-particles i { position: absolute; top: 44%; left: 50%; width: var(--size); height: var(--size); background: var(--spark-color); color: var(--spark-color); opacity: 0; animation: celebration-burst var(--duration) cubic-bezier(.12, .6, .3, 1) var(--delay) infinite; }
     .completion-particles .spark { clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%); }
     .completion-particles .confetti { height: calc(var(--size) * .5); border-radius: 2px; }
 
+    /* ── 운동 루틴: 선택 화면 ── */
+    .routine-panel { display: grid; width: 100%; align-content: start; gap: 14px; text-align: left; }
+    .routine-list { display: grid; gap: 8px; }
+    .routine-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; border: 1px solid transparent; border-radius: 12px; background: var(--panel); }
+    .routine-item[data-selected="true"] { border-color: var(--paper); }
+    .routine-select { display: grid; min-width: 0; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 12px 4px 12px 12px; border: 0; border-radius: inherit; background: transparent; text-align: left; }
+    .routine-thumb { width: 54px; height: 54px; padding: 4px; border-radius: 10px; background: #0a0a09; color: #c9c7bf; }
+    .routine-item[data-selected="true"] .routine-thumb { color: var(--accent); }
+    .routine-body { display: grid; min-width: 0; gap: 8px; }
+    .routine-item[data-selected="false"] .step-strip { opacity: .45; }
+    .routine-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .routine-name { overflow: hidden; font-size: 1rem; font-weight: 700; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+    .routine-total { color: var(--muted); font-family: var(--numeric); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+    .routine-item[data-selected="true"] .routine-total { color: var(--accent); }
+    .routine-steps { color: var(--muted); font-size: .76rem; line-height: 1.55; }
+    .routine-edit { display: inline-flex; align-self: center; min-height: 40px; align-items: center; gap: 6px; margin-right: 10px; padding: 4px 13px 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: #ffffff0a; color: #c9c7bf; font-size: .78rem; font-weight: 600; transition: background-color .15s, border-color .15s, color .15s; }
+    .routine-edit svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+    .routine-edit:hover { border-color: var(--paper); background: #ffffff14; color: var(--paper); }
+    /* 글자만 있던 버튼: 옅은 색 바탕의 알약 모양 + 동그란 더하기 표시 */
+    .text-button { display: inline-flex; justify-self: start; min-height: 46px; align-items: center; gap: 10px; padding: 6px 18px 6px 8px; border: 1px solid #ff5f2e59; border-radius: 99px; background: #ff5f2e1a; color: var(--accent); font-size: .9rem; font-weight: 700; transition: background-color .15s, border-color .15s, transform .15s; }
+    .text-button::before { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: var(--accent); color: #120c09; font-size: 1.15rem; font-weight: 800; line-height: 1; content: "+"; transition: transform .2s; }
+    .text-button:hover { border-color: var(--accent); background: #ff5f2e2e; }
+    .text-button:hover::before { transform: rotate(90deg); }
+    .text-button:active { transform: scale(.97); }
+
+    /* 단계 길이에 비례하는 띠. 운동은 굵게, 휴식은 가늘게 그려 색 없이도 구분된다. */
+    .step-strip { display: flex; height: 10px; align-items: center; gap: 3px; --strip-track: #4a4944; --strip-fill: var(--paper); }
+    .step-strip i { position: relative; flex: 1 1 0px; min-width: 0; height: 100%; overflow: hidden; border-radius: 2px; background: var(--strip-track); }
+    .step-strip i[data-kind="rest"], .step-strip i[data-kind="prep"] { height: 34%; }
+    .step-strip i::after { position: absolute; inset: 0 auto 0 0; width: var(--fill, 0%); background: var(--strip-fill); content: ""; }
+
+    .cue-options { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cue-chip { position: relative; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 6px 13px; border-radius: 99px; background: var(--panel); color: var(--muted); font-size: .8rem; font-weight: 600; cursor: pointer; }
+    .cue-chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .cue-chip::before { width: 8px; height: 8px; border: 1.5px solid currentColor; border-radius: 50%; content: ""; }
+    .cue-chip:has(input:checked) { color: var(--paper); }
+    .cue-chip:has(input:checked)::before { border-color: var(--accent); background: var(--accent); }
+    .cue-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .routine-start { position: sticky; bottom: max(14px, env(safe-area-inset-bottom)); width: 100%; box-shadow: 0 0 0 10px #0e0e0d; }
+    .routine-panel .setup-note { margin: 0; }
+
+    /* ── 운동 루틴: 진행 화면 ── */
+    .routine-view {
+      position: fixed;
+      z-index: 5;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      justify-items: center;
+      gap: 12px;
+      padding: max(16px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right))
+               max(16px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      overflow: hidden;
+      background: var(--run-bg);
+      color: var(--run-fg);
+      transition: background-color .3s ease, color .3s ease;
+      --run-bg: #0a0a09;
+      --run-fg: var(--paper);
+      --run-time: var(--paper);
+      --run-dim: #96958d;
+      --run-soft: #ffffff1c;
+    }
+
+    /* 운동 구간은 화면 전체를 포인트 색으로 채워 멀리서도 구간이 구분된다. */
+    .routine-view[data-kind="work"] { --run-bg: var(--accent); --run-fg: #120c09; --run-time: #120c09; --run-dim: #120c09cc; --run-soft: #120c0926; }
+    .routine-view[data-kind="rest"] { --run-time: var(--rest); }
+    .routine-view[data-state="paused"] { --run-bg: #1b1b19; --run-fg: var(--paper); --run-time: #96958d; --run-dim: #96958d; --run-soft: #ffffff1c; }
+    .routine-view > * { width: min(100%, 880px); }
+    .routine-view button:focus-visible { outline-color: var(--run-fg); }
+
+    .run-top { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; }
+    .run-routine { min-width: 0; overflow: hidden; font-size: .95rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .run-end { flex: none; min-height: 40px; padding: 6px 16px; border: 0; border-radius: 99px; background: var(--run-soft); color: var(--run-fg); font-size: .82rem; font-weight: 700; }
+    .run-main { display: flex; min-height: 0; flex-direction: column; align-items: flex-start; justify-content: center; gap: clamp(2px, 1.2vh, 12px); }
+    .run-figure { position: relative; flex: 1 1 0; align-self: stretch; min-height: 0; max-height: 44vh; }
+    .run-figure .figure-svg { position: absolute; inset: 0; }
+    .run-kind { min-height: 1.5em; margin: 0; color: var(--run-dim); font-size: clamp(.9rem, 3.4vw, 1.2rem); font-weight: 700; }
+    .run-step { margin: 0; font-size: clamp(2.2rem, 11vw, 5.5rem); font-weight: 800; letter-spacing: -.045em; line-height: 1.08; overflow-wrap: anywhere; }
+    .run-time { padding: 0; border: 0; background: transparent; color: var(--run-time); font-family: var(--numeric); font-size: clamp(5rem, min(31vw, 30vh), 20rem); font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.02em; line-height: .98; -webkit-tap-highlight-color: transparent; }
+    .run-time[data-long="true"] { font-size: clamp(4.4rem, min(26vw, 30vh), 20rem); }
+    .run-time span { display: inline-block; transform-origin: left center; }
+    .run-next { margin: 0; color: var(--run-dim); font-size: clamp(.95rem, 3.8vw, 1.35rem); font-weight: 600; }
+    .run-bottom { display: grid; gap: 10px; }
+    .run-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--run-dim); font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .routine-view .step-strip { height: 12px; --strip-track: var(--run-soft); --strip-fill: var(--run-fg); }
+    .run-controls { display: grid; grid-template-columns: 62px minmax(0, 1fr) 62px; gap: 8px; }
+    .routine-view[data-state="done"] .run-controls { grid-template-columns: 1fr; }
+    .run-button { display: grid; min-height: 58px; padding: 6px 10px; place-items: center; border: 0; border-radius: 14px; background: var(--run-soft); color: var(--run-fg); font-size: 1rem; font-weight: 750; }
+    .run-button svg { width: 22px; height: 22px; fill: currentColor; }
+    .run-button-main { background: var(--run-fg); color: var(--run-bg); }
+
+    /* ── 운동 루틴: 편집 창 ── */
+    .manager input.wide-input { width: 100%; min-width: 0; padding-inline: 12px; text-align: left; }
+    .step-editor { display: grid; gap: 8px; }
+    .step-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 10px; border: 1px solid transparent; border-radius: 12px; background: var(--panel); }
+    .step-row[data-kind="rest"] { border-color: var(--line); background: transparent; }
+    .kind-toggle { min-width: 54px; min-height: 42px; padding: 4px 8px; border: 0; border-radius: 8px; background: var(--accent); color: #120c09; font-size: .8rem; font-weight: 750; }
+    .step-row[data-kind="rest"] .kind-toggle { background: #262624; color: var(--rest); }
+    .step-time { display: flex; grid-column: 1 / 3; align-items: center; gap: 6px; color: var(--muted); font-size: .8rem; }
+    .step-time input:nth-of-type(2) { margin-left: 6px; }
+    .step-move { display: flex; }
+    .mini-button { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.1rem; }
+    .mini-button:hover:not(:disabled) { background: #262624; color: var(--paper); }
+    .step-row > .mini-button { justify-self: end; }
+    .step-add { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .rounds-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .93rem; font-weight: 650; }
+    .rounds-row span { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .8rem; font-weight: 400; }
+    .danger-button { justify-self: start; min-height: 40px; padding: 6px 16px; border: 1px solid #ff9f9f59; border-radius: 99px; background: #ff9f9f12; color: #ff9f9f; font-size: .8rem; font-weight: 600; transition: background-color .15s, color .15s; }
+    .danger-button:hover { background: #ff9f9f26; }
+    .danger-button[data-armed="true"] { border-color: #ff9f9f; background: #ff9f9f; color: #2a0f0f; }
+
+    /* 단계별 옵션: 색상·동작·음악 */
+    .step-options { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 6px; }
+    .option-chip { display: inline-flex; max-width: 100%; min-height: 38px; align-items: center; gap: 7px; padding: 4px 13px; border: 1px solid var(--line); border-radius: 99px; background: #ffffff0a; color: var(--paper); font: inherit; font-size: .78rem; transition: border-color .15s, background-color .15s; }
+    .option-chip:hover { border-color: #6d6c66; }
+    .option-chip[aria-expanded="true"] { border-color: var(--paper); background: #ffffff14; }
+    .option-swatch { width: 14px; height: 14px; border-radius: 50%; }
+    select.option-chip { max-width: 190px; padding-right: 28px; overflow: hidden; background: #ffffff0a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2396958d' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 11px center / 10px; text-overflow: ellipsis; appearance: none; cursor: pointer; }
+    .option-panel { grid-column: 1 / -1; padding-top: 4px; }
+    .swatch-grid { display: flex; flex-wrap: wrap; gap: 9px; }
+    .swatch { position: relative; width: 36px; height: 36px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; cursor: pointer; }
+    .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px #131312, 0 0 0 4px var(--paper); }
+    .swatch-auto { width: auto; padding: 0 14px; border: 1px solid var(--line); background: transparent; color: var(--paper); font-size: .76rem; }
+    /* 색상환은 '직접 고르기'를 뜻하는 표시라서 여기만 무지개색을 쓴다. */
+    .swatch-custom { background: conic-gradient(#ff4d5e, #ffd23f, #7ddc5a, #35c9e8, #a78bfa, #ff4d5e); }
+    .swatch-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .motion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 6px; }
+    .motion-tile { display: grid; justify-items: center; gap: 3px; padding: 6px 2px 7px; border: 1px solid var(--line); border-radius: 10px; background: #0a0a09; color: #c9c7bf; font-size: .7rem; }
+    .motion-tile .figure-host { width: 52px; height: 52px; }
+    .motion-tile:hover { border-color: #6d6c66; }
+    .motion-tile[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+    /* 선으로 그린 운동 동작 */
+    .figure-host { display: block; }
+    /* 팔다리마다 굵기가 다른 선을 겹쳐 사람 실루엣을 만든다. 굵기는 그릴 때 부위별로 지정한다. */
+    .figure-svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+    .figure-solid { fill: currentColor; stroke: none; }
+    .figure-back { opacity: .55; }
+    .figure-shadow { fill: currentColor; stroke: none; opacity: .2; }
+    .figure-bar { opacity: .6; stroke-width: 3.5; }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .run-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "fig kind time" "fig step time" "fig next time"; align-content: center; align-items: center; column-gap: 20px; }
+      .run-figure { grid-area: fig; align-self: center; width: min(40vh, 190px); height: min(40vh, 190px); max-height: none; }
+      .run-kind { grid-area: kind; align-self: end; }
+      .run-step { grid-area: step; font-size: clamp(1.8rem, 7vw, 3.6rem); }
+      .run-next { grid-area: next; align-self: start; }
+      .run-time, .run-time[data-long="true"] { grid-area: time; font-size: min(22vw, 40vh); }
+      .run-time span { transform-origin: right center; }
+      .run-button { min-height: 44px; }
+    }
+
     @keyframes rainbow-flow { to { filter: hue-rotate(360deg); } }
     @keyframes second-pulse { from { transform: scale(.88); opacity: .6; } to { transform: scale(1.15); opacity: 0; } }
-    @keyframes completion-wave { from { transform: scale(.64); opacity: .7; } to { transform: scale(1.55); opacity: 0; } }
-    @keyframes bell-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+    @keyframes completion-bloom { from { transform: scale(.15) rotate(-32deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+    @keyframes completion-check { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
     @keyframes card-fold-up { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
     @keyframes card-fold-down { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
     @keyframes aurora-drift { to { background-position: 300% 0; } }
@@ -659,6 +830,11 @@
       .manager-content { padding-inline: 14px; }
     }
 
+    @media (max-width: 420px) {
+      .time-notice-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .time-notice-row label { grid-column: 1 / -1; }
+    }
+
     @media (orientation: landscape) and (min-width: 520px) and (max-height: 460px) {
       .setup { padding-block: 16px; }
       .setup-dial { width: min(50vh, 230px); }
@@ -668,8 +844,7 @@
     @media (prefers-reduced-motion: reduce) {
       .focus-view[data-state="running"] .progress { transition: none; }
       .focus-view .rainbow-arc, .focus-view .second-pulse,
-      .completion-symbol::before, .completion-symbol::after, .completion-wave,
-      .completion-symbol svg, .card-glyph, .completion-glow,
+      .completion-petal, .completion-orbit, .completion-check, .card-glyph, .completion-glow,
       .completion-rays, .completion-title, .completion-particles i { animation: none !important; }
       .completion-particles i { opacity: .5; transform: translate(calc(var(--dx) * var(--burst-radius)), calc(var(--dy) * var(--burst-radius))); }
     }
@@ -679,16 +854,17 @@
   <main aria-label="집중 타이머">
     <section class="setup" id="setup" aria-label="시간 설정">
       <header class="setup-header">
+        <h1 class="sr-only">타이머</h1>
+        <div class="mode-switch" role="group" aria-label="타이머 종류">
+          <button type="button" class="mode-tab" id="mode-focus" aria-pressed="true">집중</button>
+          <button type="button" class="mode-tab" id="mode-routine" aria-pressed="false">루틴</button>
+        </div>
         <button type="button" class="menu-button" id="open-manager" aria-label="타이머 관리" aria-haspopup="dialog">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" /><circle cx="9" cy="6" r="2" fill="#17201c" /><circle cx="15" cy="12" r="2" fill="#17201c" /><circle cx="9" cy="18" r="2" fill="#17201c" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" /><circle cx="9" cy="6" r="2" fill="#191918" /><circle cx="15" cy="12" r="2" fill="#191918" /><circle cx="9" cy="18" r="2" fill="#191918" /></svg>
         </button>
-        <svg viewBox="0 0 28 28" aria-hidden="true">
-          <circle cx="14" cy="14" r="10.5" />
-          <path d="M14 7.5V14l4 2.5M14 1v4" stroke-linecap="round" />
-        </svg>
-        <h1>집중 타이머</h1>
       </header>
 
+      <div class="focus-panel" id="focus-panel">
       <div class="dial setup-dial">
         <svg viewBox="0 0 240 240" aria-hidden="true">
           <g transform="rotate(-90 120 120)">
@@ -696,7 +872,7 @@
             <circle class="major-ticks" cx="120" cy="120" r="112" pathLength="12" />
           </g>
           <circle class="track" cx="120" cy="120" r="101" />
-          <path d="M108 19.7A101 101 0 0 1 132 19.7" stroke="#bee7c9" stroke-width="2" stroke-linecap="round" />
+          <path d="M108 19.7A101 101 0 0 1 132 19.7" stroke="#ff5f2e" stroke-width="2" stroke-linecap="round" />
         </svg>
         <label class="duration-field">
           <input id="duration" type="text" inputmode="numeric" enterkeyhint="done" maxlength="3"
@@ -732,6 +908,50 @@
         </button>
         <p class="setup-note" id="setup-note" role="status">가운데 숫자를 눌러 시간을 직접 입력하세요.</p>
       </div>
+      </div>
+
+      <div class="routine-panel" id="routine-panel" hidden>
+        <div class="routine-list" id="routine-list" role="group" aria-label="루틴 선택"></div>
+        <button type="button" class="text-button" id="add-routine" aria-haspopup="dialog">새 루틴 만들기</button>
+        <div class="cue-options" role="group" aria-label="진행 중 안내">
+          <label class="cue-chip"><input type="checkbox" id="cue-voice">음성 안내</label>
+          <label class="cue-chip"><input type="checkbox" id="cue-beep">신호음</label>
+          <label class="cue-chip"><input type="checkbox" id="cue-vibrate">진동</label>
+          <label class="cue-chip"><input type="checkbox" id="cue-prep">준비 5초</label>
+        </div>
+        <button class="primary routine-start" type="button" id="start-routine">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.8v10.4a.7.7 0 0 0 1.1.6l8-5.2a.7.7 0 0 0 0-1.2l-8-5.2a.7.7 0 0 0-1.1.6Z" /></svg>
+          루틴 시작
+        </button>
+        <p class="setup-note" id="routine-note" role="status"></p>
+      </div>
+    </section>
+
+    <section class="routine-view" id="routine-view" aria-label="루틴 진행 화면" data-kind="prep" data-state="running" hidden>
+      <header class="run-top">
+        <strong class="run-routine" id="run-routine-name"></strong>
+        <button type="button" class="run-end" id="run-end">종료</button>
+      </header>
+      <div class="run-main">
+        <div class="run-figure figure-host" id="run-figure" aria-hidden="true" hidden></div>
+        <p class="run-kind" id="run-kind"></p>
+        <h2 class="run-step" id="run-step"></h2>
+        <button type="button" class="run-time" id="run-time"><span id="run-time-text" role="timer"></span></button>
+        <p class="run-next" id="run-next" role="status"></p>
+      </div>
+      <div class="run-bottom">
+        <div class="run-meta"><span id="run-position"></span><span id="run-total"></span></div>
+        <div class="step-strip" id="run-strip" aria-hidden="true"></div>
+        <div class="run-controls" role="group" aria-label="루틴 조작">
+          <button type="button" class="run-button" id="run-prev" aria-label="이전 단계">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.2v14H6zM19 5v14L9.5 12z" /></svg>
+          </button>
+          <button type="button" class="run-button run-button-main" id="run-toggle">일시멈춤</button>
+          <button type="button" class="run-button" id="run-skip" aria-label="다음 단계">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 5H18v14h-2.2zM5 5v14l9.5-7z" /></svg>
+          </button>
+        </div>
+      </div>
     </section>
 
     <section class="focus-view" id="focus-view" aria-label="집중 화면" hidden>
@@ -752,6 +972,9 @@
               <stop offset=".68" stop-color="#f6dd73" /><stop offset=".84" stop-color="#ffa68a" />
               <stop offset="1" stop-color="#ee8acb" />
             </linearGradient>
+            <linearGradient id="stage-gradient" x1="40" y1="20" x2="200" y2="220" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#7f7bff" /><stop offset=".5" stop-color="#bc9af7" /><stop offset="1" stop-color="#f59ad6" />
+            </linearGradient>
             <mask id="remaining-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
               <path class="progress" id="progress" d="M120 19A101 101 0 1 0 120 221A101 101 0 1 0 120 19" pathLength="100" />
             </mask>
@@ -762,12 +985,7 @@
           </g>
           <circle class="track" cx="120" cy="120" r="101" />
           <g class="ring-colors" mask="url(#remaining-mask)">
-            <g class="quarter-arcs">
-              <path d="M120 19A101 101 0 0 0 19 120" stroke="#bc9af7" />
-              <path d="M19 120A101 101 0 0 0 120 221" stroke="#f2d46d" />
-              <path d="M120 221A101 101 0 0 0 221 120" stroke="#83daa2" />
-              <path d="M221 120A101 101 0 0 0 120 19" stroke="#f38c8c" />
-            </g>
+            <circle class="quarter-arcs" cx="120" cy="120" r="101" stroke="url(#stage-gradient)" />
             <circle class="rainbow-arc" cx="120" cy="120" r="101" />
           </g>
           <circle class="pastel-marker" id="pastel-marker" cx="120" cy="19" r="4" />
@@ -797,13 +1015,29 @@
         <p class="lock-status" id="screen-lock-status" role="status"></p>
       </div>
       <button type="button" class="completion" id="completion" aria-label="타이머 종료 표시 끄기" hidden>
-        <span class="completion-glow" aria-hidden="true"></span>
-        <span class="completion-rays" aria-hidden="true"></span>
         <span class="completion-particles" id="completion-particles" aria-hidden="true"></span>
         <span class="completion-content" aria-hidden="true">
           <span class="completion-symbol">
-            <span class="completion-wave"></span>
-            <svg viewBox="0 0 64 64"><path d="M16 43c4-5 5-9 5-17a11 11 0 0 1 22 0c0 8 1 12 5 17H16Zm11 7a5 5 0 0 0 10 0M29 11a3 3 0 0 1 6 0M10 24c-3 6-3 12 0 18m44-18c3 6 3 12 0 18" /></svg>
+            <svg viewBox="0 0 240 240">
+              <defs>
+                <path id="completion-petal-shape" d="M120 116C96 109 65 91 62 65C59 39 78 23 104 31C133 40 144 70 120 116Z" />
+                <linearGradient id="completion-ice" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d0fbff"/><stop offset="1" stop-color="#3988dd"/></linearGradient>
+                <linearGradient id="completion-lilac" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f2ddff"/><stop offset="1" stop-color="#a06fee"/></linearGradient>
+                <linearGradient id="completion-coral" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3b6"/><stop offset="1" stop-color="#f17898"/></linearGradient>
+                <linearGradient id="completion-mint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e4ffd4"/><stop offset="1" stop-color="#42bba9"/></linearGradient>
+              </defs>
+              <g class="completion-orbit" fill="none">
+                <circle cx="120" cy="120" r="110" stroke="#d7eaff70" stroke-width="1" stroke-dasharray="1 7"/>
+                <g transform="rotate(28 120 120)"><ellipse cx="120" cy="120" rx="111" ry="61" stroke="#bdd5ff50"/><circle cx="231" cy="120" r="3.5" fill="#b5f6ff"/></g>
+                <g transform="rotate(-28 120 120)"><ellipse cx="120" cy="120" rx="111" ry="61" stroke="#ebcbff42"/><circle cx="9" cy="120" r="2.7" fill="#ffd1f2"/></g>
+              </g>
+              <use href="#completion-petal-shape" class="completion-petal" fill="url(#completion-ice)"/>
+              <g transform="rotate(90 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 100ms" fill="url(#completion-lilac)"/></g>
+              <g transform="rotate(180 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 200ms" fill="url(#completion-coral)"/></g>
+              <g transform="rotate(270 120 120)"><use href="#completion-petal-shape" class="completion-petal" style="--bloom-delay: 300ms" fill="url(#completion-mint)"/></g>
+              <circle class="completion-core" cx="120" cy="120" r="33" fill="#192540" stroke="#eff9ffa0" stroke-width="1.4"/>
+              <path class="completion-check" d="M105 120l10 10 21-22" fill="none" stroke="#efffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1"/>
+            </svg>
           </span>
           <span class="completion-kicker">00:00</span>
           <span class="completion-title">집중 완료</span>
@@ -822,6 +1056,32 @@
         </button>
       </header>
       <div class="manager-content">
+        <section class="manager-section" aria-labelledby="completion-alert-heading">
+          <div class="section-heading">
+            <h3 id="completion-alert-heading">완료 알림</h3>
+            <p>타이머가 끝날 때 사용할 알림을 고르세요.</p>
+          </div>
+          <div class="alert-options">
+            <label class="setting-toggle" for="finish-sound"><span>완료 소리</span><input type="checkbox" id="finish-sound"></label>
+            <label class="setting-toggle" for="finish-vibration"><span>완료 진동</span><input type="checkbox" id="finish-vibration" aria-describedby="completion-alert-support"></label>
+          </div>
+          <p id="completion-alert-support"></p>
+        </section>
+        <section class="manager-section" aria-labelledby="time-notice-heading">
+          <div class="section-heading">
+            <h3 id="time-notice-heading">남은 시간 안내</h3>
+            <p>타이머가 끝나기 몇 분 전에 알릴지 정하세요. 음성은 경과 시간과 남은 시간을 읽어줘요.</p>
+          </div>
+          <div class="alert-options" id="time-notice-options"></div>
+          <input type="file" id="time-notice-file" accept="audio/*,.mp3" hidden>
+        </section>
+        <section class="manager-section" aria-labelledby="repeat-time-notice-heading">
+          <div class="section-heading">
+            <h3 id="repeat-time-notice-heading">반복 안내</h3>
+            <p>타이머 시작 후 설정한 간격마다 알려줘요. 종료 전 안내와 겹치면 한 번만 재생해요.</p>
+          </div>
+          <div class="alert-options" id="repeat-time-notice-options"></div>
+        </section>
         <section class="manager-section" aria-labelledby="appearance-heading">
           <div class="section-heading">
             <h3 id="appearance-heading">나의 집중 화면</h3>
@@ -841,7 +1101,7 @@
         </section>
 
         <section class="manager-section" aria-labelledby="rotation-heading">
-          <label class="rotation-toggle" for="rotation-enabled">
+          <label class="setting-toggle" for="rotation-enabled">
             <span id="rotation-heading">회전으로 타이머 전환</span>
             <input type="checkbox" id="rotation-enabled" checked>
           </label>
@@ -877,6 +1137,46 @@
         <button type="button" class="primary" id="save-manager">설정 저장</button>
       </footer>
     </dialog>
+
+    <dialog class="manager" id="routine-editor" aria-labelledby="routine-editor-title">
+      <header class="manager-header">
+        <h2 id="routine-editor-title">루틴 편집</h2>
+        <button type="button" class="icon-button" id="close-routine-editor" aria-label="편집 화면 닫기" autofocus>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke-width="1.5" stroke-linecap="round" /></svg>
+        </button>
+      </header>
+      <div class="manager-content">
+        <section class="manager-section">
+          <label class="message-label" for="routine-name">루틴 이름</label>
+          <input type="text" class="wide-input" id="routine-name" maxlength="20" autocomplete="off" enterkeyhint="done" placeholder="예. 아침 하체 루틴">
+        </section>
+        <section class="manager-section" aria-labelledby="routine-steps-heading">
+          <div class="section-heading">
+            <h3 id="routine-steps-heading">단계</h3>
+            <p>위에서 아래 순서로 진행돼요. 왼쪽 버튼을 누르면 운동과 휴식이 바뀝니다. 한 단계는 5초부터 60분까지예요. 단계마다 화면 색상, 동작 그림, 음악을 고를 수 있어요.</p>
+          </div>
+          <div class="step-editor" id="step-editor"></div>
+          <input type="file" id="music-file" accept="audio/*,.mp3" hidden>
+          <div class="step-add">
+            <button type="button" class="control add-preset" id="add-work-step">+ 운동</button>
+            <button type="button" class="control add-preset" id="add-rest-step">+ 휴식</button>
+          </div>
+        </section>
+        <section class="manager-section">
+          <div class="rounds-row">
+            <label for="routine-rounds">전체 반복</label>
+            <span><input type="text" id="routine-rounds" inputmode="numeric" enterkeyhint="done" maxlength="2" autocomplete="off">회</span>
+          </div>
+          <p id="routine-editor-total"></p>
+          <button type="button" class="danger-button" id="delete-routine">이 루틴 삭제</button>
+        </section>
+      </div>
+      <footer class="manager-footer">
+        <p class="manager-message" id="routine-editor-message" role="status"></p>
+        <button type="button" class="control" id="cancel-routine-editor">취소</button>
+        <button type="button" class="primary" id="save-routine-editor">루틴 저장</button>
+      </footer>
+    </dialog>
   </main>
 
   <script>
@@ -891,6 +1191,10 @@
       rotations: [10, 15, 30],
       message: '',
       theme: 'clean',
+      finishSound: false,
+      finishVibration: false,
+      timeNotices: [5, 3, 1].map((minutes) => ({ minutes, choice: '' })),
+      repeatTimeNotice: { minutes: 5, choice: '' },
     };
     const themes = [
       ['clean', '고요'], ['bold', '볼드'], ['mono', '모노'], ['classic', '클래식'],
@@ -961,11 +1265,18 @@
     const completion = document.getElementById('completion');
     const completionParticles = document.getElementById('completion-particles');
     const completionDetail = document.getElementById('completion-detail');
+    const finishSoundInput = document.getElementById('finish-sound');
+    const finishVibrationInput = document.getElementById('finish-vibration');
+    const completionAlertSupport = document.getElementById('completion-alert-support');
+    const timeNoticeOptions = document.getElementById('time-notice-options');
+    const repeatTimeNoticeOptions = document.getElementById('repeat-time-notice-options');
+    const timeNoticeFile = document.getElementById('time-notice-file');
     const toggle = document.getElementById('toggle');
     const stop = document.getElementById('stop');
     const slotTabs = document.getElementById('slot-tabs');
     const screenLockStatus = document.getElementById('screen-lock-status');
     const manager = document.getElementById('manager');
+    const saveManagerButton = document.getElementById('save-manager');
     const presetEditor = document.getElementById('preset-editor');
     const addPreset = document.getElementById('add-preset');
     const rotationEnabled = document.getElementById('rotation-enabled');
@@ -1006,12 +1317,123 @@
     let lastBeat = '';
     let completionTimeout;
     let completionUntil = 0;
+    let completionAudio = null;
+    let completionVibrating = false;
+    const completionSoundNodes = new Set();
+    let timeNoticeDraft = null;
+    let timeNoticeFileIndex = null;
+    let timeNoticePlayer = null;
+    let timeNoticePlayback = null;
     let fullscreenPending = false;
     let orientationLockOwned = false;
     let fullscreenInitialized = false;
     let watchFaceCounter = 0;
     const slotButtons = [];
     const slotReadouts = [];
+
+    // 운동 루틴 상태. 회전 감지 코드가 참조하므로 타이머 상태와 함께 먼저 선언한다.
+    const routineStorageKey = 'focus-timer.routines.v1';
+    const maxRoutines = 20;
+    const maxSteps = 30;
+    const maxRounds = 20;
+    const minStepSeconds = 5;
+    const maxStepSeconds = 3600;
+    const prepSeconds = 5;
+    const kindLabels = { work: '운동', rest: '휴식', prep: '준비' };
+    // 집중 타이머 링: 구간(1/4)마다 쓰는 그라데이션 색 조합 [시작, 중간, 끝]
+    const stageGradients = [
+      ['#7f7bff', '#bc9af7', '#f59ad6'],
+      ['#ffa45c', '#f2d46d', '#c4ec7a'],
+      ['#4fd3c8', '#83daa2', '#d2e96e'],
+      ['#ff6f7d', '#f38c8c', '#ffb86b'],
+    ];
+    const pastelGradients = [
+      ['#bdc0f0', '#c9b6ee', '#e7c6db'],
+      ['#a9c8f0', '#a9dbe8', '#bfe3d6'],
+      ['#b5ded5', '#bfe3c0', '#dfe6b4'],
+      ['#e7c6db', '#f0c2c8', '#f3d9b8'],
+    ];
+    const stageStops = Array.from(document.querySelectorAll('#stage-gradient stop'));
+    // 단계 색상 팔레트
+    const stepColors = [
+      ['#ff5f2e', '주황'], ['#ff4d5e', '빨강'], ['#ff7ab6', '분홍'], ['#a78bfa', '보라'], ['#5b9dff', '파랑'],
+      ['#35c9e8', '하늘'], ['#2fd3b5', '청록'], ['#7ddc5a', '초록'], ['#d4f14a', '라임'], ['#ffd23f', '노랑'],
+    ];
+    const maxTrackBytes = 40 * 1024 * 1024;
+    // 선으로 그린 운동 동작. 자세 하나는 100×100 칸 안의 관절 좌표 11개다.
+    // 순서: 머리, 목, 골반, 앞팔(팔꿈치·손), 뒷팔(팔꿈치·손), 앞다리(무릎·발), 뒷다리(무릎·발)
+    // seq는 [자세 번호, 다음 자세까지 걸리는 초]의 반복 목록이고, 같은 자세를 이어 쓰면 멈춤이 된다.
+    const pose = (text) => text.split(/[ ,]+/).map(Number);
+    const motions = {
+      squat: {
+        name: '스쿼트', words: ['스쿼트', 'squat'], foot: 'side',
+        poses: [pose('50,17 50,26 50,52 51,39 54,51 49,39 51,51 49,72 47,92 52,72 53,92'),
+          pose('58,40 53,47 38,68 66,48 79,46 65,50 78,49 56,73 47,92 60,73 53,92')],
+        seq: [[0, .9], [1, .2], [1, .7], [0, .4]],
+      },
+      lunge: {
+        name: '런지', words: ['런지', '린지', 'lunge'], foot: 'side',
+        poses: [pose('50,21 50,30 50,56 44,43 48,55 56,44 52,55 61,74 70,92 39,75 26,92'),
+          pose('50,35 50,44 50,70 44,57 48,69 56,58 52,69 69,72 70,92 44,87 26,90')],
+        seq: [[0, .8], [1, .2], [1, .7], [0, .35]],
+      },
+      boxing: {
+        name: '쉐도우 복싱', words: ['복싱', '권투', '쉐도우', '섀도', 'box'], foot: 'side',
+        poses: [pose('54,22 52,31 49,56 58,44 63,32 49,45 57,34 59,74 62,92 43,75 38,92'),
+          pose('56,22 54,31 50,56 67,32 80,31 50,45 58,34 60,74 62,92 43,75 38,92'),
+          pose('58,23 56,32 52,56 58,45 62,34 68,33 83,32 61,74 62,92 46,75 38,91')],
+        seq: [[0, .12], [1, .1], [1, .2], [0, .25], [0, .13], [2, .12], [2, .24], [0, .45]],
+      },
+      pushup: {
+        name: '팔굽혀펴기', words: ['팔굽혀', '푸시업', '푸쉬업', 'push'],
+        poses: [pose('82,59 74,64 49,72 74,77 74,90 76,77 76,90 31,81 14,89 33,81 16,89'),
+          pose('86,78 78,81 52,84 68,76 74,90 70,76 76,90 33,87 14,89 35,87 16,89')],
+        seq: [[0, .8], [1, .15], [1, .6], [0, .35]],
+      },
+      hang: {
+        name: '오래 매달리기', words: ['매달리', 'hang'], bar: 6, flat: true,
+        poses: [pose('49,20 49,29 48,55 40.5,18 38,6 58.5,18 62,6 44.5,75 43,94 51,75 50,94'),
+          pose('51,20 51,29 52,55 41.5,18 38,6 59.5,18 62,6 49,75 50,94 55.5,75 57,94')],
+        seq: [[0, 1.3], [1, 1.3]],
+      },
+      pullup: {
+        name: '철봉 턱걸이', words: ['철봉', '턱걸이', '풀업', 'pull'], bar: 20, flat: true,
+        poses: [pose('50,33 50,42 50,66 40,32 36,20 60,32 64,20 46,82 47,95 54,82 53,95'),
+          pose('50,13 50,24 50,48 32,34 36,20 68,34 64,20 46,64 47,77 54,64 53,77')],
+        seq: [[0, .9], [1, .25], [1, 1], [0, .4]],
+      },
+      jack: {
+        name: '팔벌려뛰기', words: ['팔벌려', '점핑', 'jack'], flat: true,
+        poses: [pose('50,19 50,28 50,54 43,40 42,52 57,40 58,52 46.5,73 46,92 53.5,73 54,92'),
+          pose('50,17 50,26 50,52 37,17 33,6 63,17 67,6 42,71 34,90 58,71 66,90')],
+        seq: [[0, .28], [1, .12], [1, .28], [0, .12]],
+      },
+      rest: {
+        name: '숨 고르기', words: [], flat: true,
+        poses: [pose('50,19 50,28 50,54 43,40 42,53 57,40 58,53 46.5,73 45.5,92 53.5,73 54.5,92'),
+          pose('50,17.5 50,26.5 50,54 41.5,38.5 40.5,51.5 58.5,38.5 59.5,51.5 46.5,73 45.5,92 53.5,73 54.5,92')],
+        seq: [[0, 1.8], [1, 1.8]],
+      },
+    };
+    for (const motion of Object.values(motions)) motion.total = motion.seq.reduce((sum, [, seconds]) => sum + seconds, 0);
+    const routineStore = loadRoutineStore();
+    let appMode = routineStore.mode;
+    let routineRun = null;
+    let routineWakeLock = null;
+    let routineWakeLockPending = false;
+    let editorDraft = null;
+    // 동작 그림: 화면에 붙어 있는 그림만 한 개의 애니메이션 루프로 그린다.
+    const figures = new Set();
+    const routineFigures = new Map();
+    let figureLoopRunning = false;
+    let figureLastFrame = 0;
+    // 음악: 파일은 IndexedDB에 두고, 공유 보관함 목록은 루틴 저장소에 둔다.
+    const trackBlobs = new Map();
+    const trackUrls = new Map();
+    const musicDbReady = openMusicDb();
+    let musicPlayer = null;
+    let musicTrackId = null;
+    let musicTarget = null;
 
     function setText(element, text) {
       if (element.textContent !== text) element.textContent = text;
@@ -1025,6 +1447,13 @@
       const text = value.trim();
       const minutes = /^[0-9]{1,3}$/.test(text) ? Number(text) : 0;
       return validMinutes(minutes) ? minutes : 0;
+    }
+
+    function normalizeTimeNotice(notice, fallback) {
+      return {
+        minutes: validMinutes(notice?.minutes) ? notice.minutes : fallback.minutes,
+        choice: typeof notice?.choice === 'string' ? notice.choice : '',
+      };
     }
 
     function loadSettings() {
@@ -1044,6 +1473,15 @@
           rotationEnabled: typeof saved.rotationEnabled === 'boolean' ? saved.rotationEnabled : true,
           message: typeof saved.message === 'string' ? saved.message.slice(0, 80).trim() : '',
           theme: themes.some(([id]) => id === saved.theme) ? saved.theme : defaults.theme,
+          finishSound: saved.finishSound === true,
+          finishVibration: saved.finishVibration === true,
+          timeNotices: defaults.timeNotices.map((fallback, index) => {
+            const notice = Array.isArray(saved.timeNotices) ? saved.timeNotices[index] : {
+              choice: saved.timeNotices?.[fallback.minutes],
+            };
+            return normalizeTimeNotice(notice, fallback);
+          }),
+          repeatTimeNotice: normalizeTimeNotice(saved.repeatTimeNotice, defaults.repeatTimeNotice),
         };
       } catch {
         return fallback;
@@ -1341,8 +1779,16 @@
         pastelMarker.setAttribute('cx', String(120 - 101 * Math.sin(angle)));
         pastelMarker.setAttribute('cy', String(120 - 101 * Math.cos(angle)));
       }
-      const colors = ['#bc9af7', '#f2d46d', '#83daa2', '#f38c8c'];
-      focusStage.style.setProperty('--stage-color', colors[Math.min(3, Math.floor(elapsed * 4))]);
+      // 1/4이 지날 때마다 링 전체의 그라데이션 색 조합을 바꾼다.
+      const stage = Math.min(3, Math.floor(elapsed * 4));
+      const pastel = settings.theme === 'watch-pastel';
+      const stageKey = (pastel ? 'pastel' : 'default') + stage;
+      if (focusStage.dataset.stage !== stageKey) {
+        focusStage.dataset.stage = stageKey;
+        const palette = (pastel ? pastelGradients : stageGradients)[stage];
+        stageStops.forEach((stop, index) => { stop.style.stopColor = palette[index]; });
+        focusStage.style.setProperty('--stage-color', palette[1]);
+      }
       let urgency = 'normal';
       if (timer.remainingMs > 0 && timer.remainingMs <= 60000) urgency = 'rainbow';
       if (timer.remainingMs > 0 && timer.remainingMs <= 10000) urgency = 'countdown';
@@ -1407,18 +1853,21 @@
       if (timer.remainingMs === 0) {
         timer.state = 'done';
         clearInterval(interval);
+        stopTimeNotice();
       }
     }
 
     function tick() {
-      if (!sessionActive || timers[activeIndex].state !== 'running') return;
+      const timer = timers[activeIndex];
+      if (!sessionActive || timer.state !== 'running') return;
       syncTimer();
-      if (timers[activeIndex].state === 'done') {
+      if (timer.state === 'done') {
         setControls(true);
         render();
-        showCompletion(deadline + 10000);
+        showCompletion(deadline + 10000, true);
       } else {
         renderTime();
+        checkTimeNotice(timer);
       }
     }
 
@@ -1426,17 +1875,26 @@
       clearInterval(interval);
       dismissCompletion();
       const timer = timers[activeIndex];
+      const fresh = timer.state === 'ready' || timer.state === 'done';
       deadline = Date.now() + timer.remainingMs;
       timer.state = 'running';
       interval = setInterval(tick, 200);
       setControls(false);
       focusTrigger.focus();
       render();
+      if (fresh) {
+        timer.lastNoticeCheckMs = timer.remainingMs;
+        const notice = settings.timeNotices.find(({ minutes, choice }) => choice && minutes * minuteMs === timer.totalMs);
+        if (notice) announceTimeNotice(timer, notice.choice);
+      } else {
+        checkTimeNotice(timer);
+      }
     }
 
     function switchTimer(index) {
       if (!sessionActive || !settings.rotationEnabled || index === activeIndex) return;
       dismissCompletion();
+      stopTimeNotice();
       syncTimer();
       clearInterval(interval);
       if (timers[activeIndex].state === 'running') timers[activeIndex].state = 'paused';
@@ -1487,12 +1945,168 @@
       clearTimeout(completionTimeout);
       completionUntil = 0;
       completion.hidden = true;
+      for (const oscillator of completionSoundNodes) {
+        try { oscillator.stop(); } catch {}
+      }
+      completionSoundNodes.clear();
+      if (completionVibrating) {
+        try { navigator.vibrate(0); } catch {}
+      }
+      completionVibrating = false;
     }
 
-    function showCompletion(until) {
-      dismissCompletion();
+    function prepareCompletionAudio() {
+      if (!settings.finishSound) return;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      try {
+        if (!completionAudio || completionAudio.state === 'closed') completionAudio = new AudioContextClass();
+        if (completionAudio.state !== 'running') completionAudio.resume().catch(() => {});
+      } catch {}
+    }
+
+    function timeNoticeText(totalMs, remainingMs) {
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      const elapsedSeconds = totalMs / 1000 - remainingSeconds;
+      const elapsed = elapsedSeconds ? spokenDuration(elapsedSeconds) + ' 지났습니다.' : '타이머를 시작합니다.';
+      return elapsed + ' ' + spokenDuration(remainingSeconds) + ' 남았습니다.';
+    }
+
+    function currentTimeNotices() {
+      return [...settings.timeNotices, settings.repeatTimeNotice];
+    }
+
+    function isTimeNoticeMusic(choice) {
+      return choice !== '' && choice !== 'voice';
+    }
+
+    function announceTimeNotice(timer, choice) {
+      playTimeNotice(choice, timeNoticeText(timer.totalMs, timer.remainingMs));
+    }
+
+    function checkTimeNotice(timer) {
+      const previousMs = timer.lastNoticeCheckMs;
+      const remainingMs = timer.remainingMs;
+      timer.lastNoticeCheckMs = remainingMs;
+      // A delayed tick plays only the latest configured cue, within a minute of its threshold.
+      const cutoffMs = Math.min(previousMs, remainingMs + minuteMs);
+      let selectedMs = Infinity;
+      let selectedChoice = '';
+      const repeat = settings.repeatTimeNotice;
+      if (repeat.choice) {
+        const intervalMs = repeat.minutes * minuteMs;
+        const elapsedMs = timer.totalMs - remainingMs;
+        const cueMs = remainingMs + elapsedMs % intervalMs;
+        if (cueMs < cutoffMs) {
+          selectedMs = cueMs;
+          selectedChoice = repeat.choice;
+        }
+      }
+      // Smaller remaining times are more recent. A fixed cue wins when both are due together.
+      for (const { minutes, choice } of settings.timeNotices) {
+        const cueMs = minutes * minuteMs;
+        if (choice && remainingMs <= cueMs && cueMs < cutoffMs && cueMs <= selectedMs) {
+          selectedMs = cueMs;
+          selectedChoice = choice;
+        }
+      }
+      if (selectedChoice) announceTimeNotice(timer, selectedChoice);
+    }
+
+    function prepareTimeNoticeAudio() {
+      if (timeNoticePlayer) return;
+      // Prime the same audio element during a gesture with a silent WAV, then reuse it for cues.
+      const player = new Audio('data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==');
+      timeNoticePlayer = player;
+      player.play().catch(() => {
+        if (!timeNoticePlayback && player.src.startsWith('data:audio/wav')) timeNoticePlayer = null;
+      });
+    }
+
+    function stopTimeNotice() {
+      const playback = timeNoticePlayback;
+      if (!playback) return;
+      timeNoticePlayback = null;
+      if (playback.utterance) window.speechSynthesis?.cancel();
+      if (playback.player) {
+        playback.player.onended = playback.player.onerror = null;
+        playback.player.pause();
+      }
+    }
+
+    async function playTimeNotice(choice, text, onError) {
+      stopTimeNotice();
+      const playback = {};
+      timeNoticePlayback = playback;
+      function finished() {
+        if (timeNoticePlayback === playback) timeNoticePlayback = null;
+      }
+      function failed() {
+        if (timeNoticePlayback !== playback) return;
+        stopTimeNotice();
+        onError?.();
+      }
+      try {
+        if (choice === 'voice') {
+          const utterance = koreanUtterance(text);
+          playback.utterance = utterance;
+          utterance.onend = finished;
+          utterance.onerror = failed;
+          window.speechSynthesis.speak(utterance);
+        } else {
+          const url = trackUrls.get(choice) || await trackUrl(choice);
+          if (timeNoticePlayback !== playback) return;
+          if (!url) {
+            failed();
+            return;
+          }
+          const player = timeNoticePlayer ??= new Audio();
+          playback.player = player;
+          player.src = url;
+          player.onended = finished;
+          player.onerror = failed;
+          await player.play();
+        }
+      } catch {
+        failed();
+      }
+    }
+
+    function playCompletionAlert() {
+      if (settings.finishVibration && typeof navigator.vibrate === 'function' && document.visibilityState === 'visible') {
+        try { completionVibrating = navigator.vibrate([120, 75, 120, 95, 220]); } catch {}
+      }
+      if (!settings.finishSound || completionAudio?.state !== 'running') return;
+      const firstNote = completionAudio.currentTime;
+      [392, 523.25, 659.25].forEach((frequency, index) => {
+        const startTime = firstNote + index * .13;
+        const oscillator = completionAudio.createOscillator();
+        const volume = completionAudio.createGain();
+        oscillator.type = 'triangle';
+        oscillator.frequency.value = frequency;
+        volume.gain.setValueAtTime(.0001, startTime);
+        volume.gain.exponentialRampToValueAtTime(.10, startTime + .03);
+        volume.gain.exponentialRampToValueAtTime(.0001, startTime + .65);
+        oscillator.connect(volume);
+        volume.connect(completionAudio.destination);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          volume.disconnect();
+          completionSoundNodes.delete(oscillator);
+        };
+        oscillator.start(startTime);
+        oscillator.stop(startTime + .66);
+        completionSoundNodes.add(oscillator);
+      });
+    }
+
+    function showCompletion(until, notify = false) {
       const remaining = until - Date.now();
-      if (remaining <= 0) return;
+      if (remaining <= 0) {
+        dismissCompletion();
+        return;
+      }
+      clearTimeout(completionTimeout);
       completionUntil = until;
       setText(completionDetail, timers[activeIndex].totalMs / minuteMs + '분 타이머가 끝났어요');
       completion.hidden = document.visibilityState !== 'visible';
@@ -1501,6 +2115,9 @@
         dismissCompletion();
         focusTrigger.focus();
       }, remaining);
+      if (notify) {
+        try { playCompletionAlert(); } catch {}
+      }
     }
 
     function updateFocusLayout() {
@@ -1645,8 +2262,123 @@
       updateSensorStatus();
     }
 
+    function renderTimeNoticeChoices() {
+      const voiceSupported = !!window.speechSynthesis && typeof SpeechSynthesisUtterance === 'function';
+      for (const [index, { select, preview }] of timeNoticeRows.entries()) {
+        const voice = new Option(voiceSupported ? '음성 안내 (TTS)' : '음성 안내 (지원되지 않음)', 'voice');
+        voice.disabled = !voiceSupported;
+        select.replaceChildren(new Option('사용 안 함', ''), voice,
+          ...routineStore.tracks.map(({ id, name }) => new Option('♪ ' + name, id)),
+          new Option('+ 음악 파일 선택…', '+'));
+        select.value = timeNoticeDraft[index];
+        if (select.selectedIndex === -1) select.value = '';
+        timeNoticeDraft[index] = select.value;
+        preview.disabled = !select.value || (select.value === 'voice' && !voiceSupported);
+      }
+    }
+
+    function createTimeNoticeRow(index) {
+      const repeat = index === defaults.timeNotices.length;
+      const labelText = repeat ? '반복 안내' : (index + 1) + '번째 종료 전 안내';
+      const id = repeat ? 'repeat-time-notice' : 'time-notice-' + (index + 1);
+      const row = el('div', 'time-notice-row');
+      const timing = el('label');
+      const minutesInput = el('input');
+      minutesInput.id = id + '-minutes';
+      minutesInput.type = 'text';
+      minutesInput.inputMode = 'numeric';
+      minutesInput.enterKeyHint = 'done';
+      minutesInput.autocomplete = 'off';
+      minutesInput.maxLength = 3;
+      minutesInput.setAttribute('aria-label', labelText + (repeat ? ' 간격(분)' : ' 시간(분)'));
+      timing.append(minutesInput, repeat ? '분마다' : '분 전');
+      const select = el('select', 'option-chip');
+      select.id = id + '-choice';
+      select.setAttribute('aria-label', labelText + ' 소리');
+      const preview = el('button', 'option-chip', '미리 듣기');
+      preview.type = 'button';
+      preview.setAttribute('aria-label', labelText + ' 미리 듣기');
+      select.addEventListener('change', () => {
+        minutesInput.removeAttribute('aria-invalid');
+        stopTimeNotice();
+        if (select.value === '+') {
+          select.value = timeNoticeDraft[index];
+          if (saveManagerButton.disabled) return;
+          timeNoticeFileIndex = index;
+          timeNoticeFile.value = '';
+          timeNoticeFile.click();
+        } else {
+          timeNoticeDraft[index] = select.value;
+          preview.disabled = !select.value;
+          if (isTimeNoticeMusic(select.value)) trackUrl(select.value).catch(() => {});
+        }
+      });
+      preview.addEventListener('click', () => {
+        managerMessage.removeAttribute('data-error');
+        setText(managerMessage, '');
+        const choice = timeNoticeDraft[index];
+        let text = '';
+        if (choice === 'voice') {
+          const minutes = readMinutes(minutesInput.value);
+          if (!minutes) {
+            managerError(minutesInput, '안내 시간은 1분부터 120분 사이로 입력하세요.');
+            return;
+          }
+          const timerMinutes = readMinutes(duration.value) || settings.normalMinutes;
+          const totalMinutes = Math.max(timerMinutes, repeat ? minutes + 1 : minutes);
+          const remainingMinutes = repeat ? totalMinutes - minutes : minutes;
+          text = timeNoticeText(totalMinutes * minuteMs, remainingMinutes * minuteMs);
+        } else {
+          prepareTimeNoticeAudio();
+        }
+        playTimeNotice(choice, text, () => {
+          managerMessage.setAttribute('data-error', '');
+          setText(managerMessage, choice === 'voice' ? '음성 안내를 재생할 수 없어요.' : '음악을 재생할 수 없어요. 파일을 다시 골라 주세요.');
+        });
+      });
+      row.append(timing, select, preview);
+      (repeat ? repeatTimeNoticeOptions : timeNoticeOptions).append(row);
+      return { minutesInput, select, preview };
+    }
+
+    async function onTimeNoticeFile() {
+      const file = timeNoticeFile.files[0];
+      const index = timeNoticeFileIndex;
+      const draft = timeNoticeDraft;
+      if (!file || index === null || !manager.open || !draft) return;
+      const error = trackFileError(file);
+      managerMessage.toggleAttribute('data-error', !!error);
+      setText(managerMessage, error);
+      if (error) return;
+
+      saveManagerButton.disabled = true;
+      const { id, stored } = await addTrack(file);
+      if (!manager.open || timeNoticeDraft !== draft) {
+        pruneTracks();
+        return;
+      }
+      saveManagerButton.disabled = false;
+      draft[index] = id;
+      trackUrl(id).catch(() => {});
+      renderTimeNoticeChoices();
+      if (!stored) setText(managerMessage, '이 환경에서는 음악 파일을 저장할 수 없어, 창을 닫으면 다시 골라야 해요.');
+    }
+
     function openManager() {
       cancelPendingRotation();
+      finishSoundInput.checked = settings.finishSound;
+      finishVibrationInput.checked = settings.finishVibration;
+      finishVibrationInput.disabled = typeof navigator.vibrate !== 'function';
+      setText(completionAlertSupport, finishVibrationInput.disabled ? '이 브라우저에서는 진동이 지원되지 않아요.' : '');
+      const notices = currentTimeNotices();
+      timeNoticeDraft = notices.map(({ choice }) => choice);
+      for (const [index, { minutesInput }] of timeNoticeRows.entries()) {
+        minutesInput.value = String(notices[index].minutes);
+        minutesInput.removeAttribute('aria-invalid');
+      }
+      timeNoticeFileIndex = null;
+      saveManagerButton.disabled = false;
+      renderTimeNoticeChoices();
       focusMessage.value = settings.message;
       draftTheme = settings.theme;
       renderThemeChoices();
@@ -1673,6 +2405,7 @@
     }
 
     function saveManager() {
+      if (saveManagerButton.disabled) return;
       const presetInputs = Array.from(presetEditor.querySelectorAll('input'));
       const newPresets = presetInputs.map((input) => readMinutes(input.value));
       const invalidPreset = newPresets.indexOf(0);
@@ -1694,6 +2427,26 @@
           return;
         }
       }
+      const savedNotices = currentTimeNotices();
+      const notices = [];
+      const fixedMinutes = new Set();
+      for (const [index, { minutesInput }] of timeNoticeRows.entries()) {
+        const choice = timeNoticeDraft[index];
+        const minutes = readMinutes(minutesInput.value);
+        if (!minutes && (choice || minutesInput.value.trim())) {
+          managerError(minutesInput, '안내 시간은 1분부터 120분 사이로 입력하세요.');
+          return;
+        }
+        if (choice && index < defaults.timeNotices.length) {
+          if (fixedMinutes.has(minutes)) {
+            managerError(minutesInput, '실행할 종료 전 안내의 시간은 서로 다르게 입력하세요.');
+            return;
+          }
+          fixedMinutes.add(minutes);
+        }
+        notices.push({ minutes: minutes || savedNotices[index].minutes, choice });
+      }
+      const repeatTimeNotice = notices.pop();
       settings = {
         version: 1,
         presets: newPresets,
@@ -1702,8 +2455,16 @@
         rotations,
         message: focusMessage.value.slice(0, 80).trim(),
         theme: draftTheme,
+        finishSound: finishSoundInput.checked,
+        finishVibration: finishVibrationInput.checked,
+        timeNotices: notices,
+        repeatTimeNotice,
       };
-      const saved = persistSettings();
+      prepareCompletionAudio();
+      const hasNoticeMusic = currentTimeNotices().some(({ choice }) => isTimeNoticeMusic(choice));
+      if (hasNoticeMusic) prepareTimeNoticeAudio();
+      const musicSaved = !hasNoticeMusic || persistRoutineStore();
+      const saved = persistSettings() && musicSaved;
       renderPresets();
       refreshDuration();
       setText(setupNote, saved ? '설정을 저장했어요.' : '설정을 적용했어요. 이 환경에서는 다시 열면 설정이 초기화될 수 있어요.');
@@ -1734,6 +2495,7 @@
     }
 
     function queueRotation(index) {
+      if (rotationBlocked()) return;
       if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible') return;
       if (index === detectedIndex) {
         cancelPendingRotation();
@@ -1747,6 +2509,7 @@
       // Wait for a settled position so passing through an angle does not start its timer.
       rotationTimeout = setTimeout(() => {
         pendingIndex = null;
+        if (rotationBlocked()) return;
         if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible') return;
         detectedIndex = index;
         if (sessionActive) {
@@ -1758,16 +2521,17 @@
     }
 
     function onScreenChange(event) {
+      const quarter = readScreenQuarter();
       if (event && (!sensorUsable || Date.now() - lastSensorAt >= 1500)) {
-        layoutPhysicalQuarter = readScreenQuarter();
+        layoutPhysicalQuarter = quarter;
       }
       updateFocusLayout();
-      if (manager.open || !settings.rotationEnabled) return;
+      if (manager.open || !settings.rotationEnabled || document.visibilityState !== 'visible' ||
+          quarter === null || screenBaseline === null) return;
+      const index = normalizeQuarter(quarter - screenBaseline);
+      if (event && index !== 0 && !fullscreenInitialized) enterFullscreen();
       if (sensorUsable && Date.now() - lastSensorAt < 1500) return;
-      const quarter = readScreenQuarter();
-      if (quarter !== null && screenBaseline !== null) {
-        queueRotation(normalizeQuarter(quarter - screenBaseline));
-      }
+      queueRotation(index);
     }
 
     function onDeviceOrientation(event) {
@@ -1891,11 +2655,12 @@
       }
       const timer = timers[activeIndex];
       if (timer.state === 'running') {
+        stopTimeNotice();
         syncTimer();
         if (timer.state === 'done') {
           setControls(true);
           render();
-          showCompletion(deadline + 10000);
+          showCompletion(deadline + 10000, true);
           return;
         }
         clearInterval(interval);
@@ -1925,6 +2690,7 @@
       clearInterval(interval);
       cancelPendingRotation();
       dismissCompletion();
+      stopTimeNotice();
       sessionActive = false;
       timers = [];
       activeIndex = 0;
@@ -1936,11 +2702,13 @@
       start.focus();
     });
 
+    const timeNoticeRows = Array.from({ length: defaults.timeNotices.length + 1 }, (_, index) => createTimeNoticeRow(index));
+    timeNoticeFile.addEventListener('change', onTimeNoticeFile);
     document.getElementById('open-manager').addEventListener('click', openManager);
     summary.addEventListener('click', openManager);
     document.getElementById('close-manager').addEventListener('click', () => manager.close());
     document.getElementById('cancel-manager').addEventListener('click', () => manager.close());
-    document.getElementById('save-manager').addEventListener('click', saveManager);
+    saveManagerButton.addEventListener('click', saveManager);
     addPreset.addEventListener('click', () => {
       const values = presetDraft();
       if (values.length >= 10) return;
@@ -1951,6 +2719,9 @@
     rotationEnabled.addEventListener('change', updateRotationFields);
     sensorConnect.addEventListener('click', () => connectSensors(true));
     manager.addEventListener('close', () => {
+      stopTimeNotice();
+      timeNoticeDraft = null;
+      pruneTracks();
       if (!sessionActive) resetRotationBaseline();
     });
     manager.addEventListener('input', (event) => {
@@ -1973,6 +2744,8 @@
     // A permitted first gesture prepares fullscreen while the timer is still waiting for rotation.
     document.addEventListener('click', (event) => {
       connectSensors();
+      prepareCompletionAudio();
+      if (currentTimeNotices().some(({ choice }) => isTimeNoticeMusic(choice))) prepareTimeNoticeAudio();
       if (fullscreenInitialized) return;
       if (!event.target.closest?.('#fullscreen-toggle')) enterFullscreen();
     }, { capture: true });
@@ -1990,14 +2763,1327 @@
     document.addEventListener('visibilitychange', () => {
       tick();
       updateScreenLock();
+      tickRoutine();
+      updateRoutineWakeLock();
       if (document.visibilityState === 'hidden') {
         cancelPendingRotation();
         if (!sessionActive) sensorUsable = false;
       }
       else {
-        if (completionUntil) showCompletion(completionUntil);
+        if (completionUntil && completion.hidden) showCompletion(completionUntil);
         if (sessionActive) onScreenChange();
         else resetRotationBaseline();
+      }
+    });
+
+    // ── 운동 루틴 ──────────────────────────────────────────────
+    const focusPanel = document.getElementById('focus-panel');
+    const routinePanel = document.getElementById('routine-panel');
+    const modeTabs = { focus: document.getElementById('mode-focus'), routine: document.getElementById('mode-routine') };
+    const openManagerButton = document.getElementById('open-manager');
+    const routineList = document.getElementById('routine-list');
+    const addRoutineButton = document.getElementById('add-routine');
+    const startRoutineButton = document.getElementById('start-routine');
+    const routineNote = document.getElementById('routine-note');
+    const routineHint = '진행 중 큰 숫자를 누르면 잠시 멈추고, 좌우 버튼으로 단계를 넘길 수 있어요.';
+    const cueInputs = {
+      voice: document.getElementById('cue-voice'),
+      beep: document.getElementById('cue-beep'),
+      vibrate: document.getElementById('cue-vibrate'),
+      prep: document.getElementById('cue-prep'),
+    };
+    const routineView = document.getElementById('routine-view');
+    const runMain = routineView.querySelector('.run-main');
+    const runFigureHost = document.getElementById('run-figure');
+    const musicFile = document.getElementById('music-file');
+    const runRoutineName = document.getElementById('run-routine-name');
+    const runEnd = document.getElementById('run-end');
+    const runKind = document.getElementById('run-kind');
+    const runStep = document.getElementById('run-step');
+    const runTime = document.getElementById('run-time');
+    const runTimeText = document.getElementById('run-time-text');
+    const runNext = document.getElementById('run-next');
+    const runPosition = document.getElementById('run-position');
+    const runTotal = document.getElementById('run-total');
+    const runStrip = document.getElementById('run-strip');
+    const runPrev = document.getElementById('run-prev');
+    const runToggle = document.getElementById('run-toggle');
+    const runSkip = document.getElementById('run-skip');
+    const routineEditor = document.getElementById('routine-editor');
+    const editorTitle = document.getElementById('routine-editor-title');
+    const editorName = document.getElementById('routine-name');
+    const editorRounds = document.getElementById('routine-rounds');
+    const stepEditor = document.getElementById('step-editor');
+    const addWorkStep = document.getElementById('add-work-step');
+    const addRestStep = document.getElementById('add-rest-step');
+    const editorTotal = document.getElementById('routine-editor-total');
+    const editorMessage = document.getElementById('routine-editor-message');
+    const deleteRoutineButton = document.getElementById('delete-routine');
+    // 신호음: [주파수(Hz), 시작 지연(초), 길이(초)]
+    const cues = {
+      tick: { tones: [[880, 0, .09]] },
+      prep: { tones: [[660, 0, .12]], vibrate: [60] },
+      work: { tones: [[1320, 0, .4]], vibrate: [250] },
+      rest: { tones: [[660, 0, .16], [440, .18, .3]], vibrate: [90, 70, 90] },
+      finish: { tones: [[523.25, 0, .18], [659.25, .16, .18], [783.99, .32, .18], [1046.5, .48, .5]], vibrate: [120, 75, 120, 95, 260] },
+    };
+
+    /** 처음 실행할 때 들어 있는 예시 루틴. */
+    function defaultRoutines() {
+      return [
+        { id: 'basic', name: '기본 루틴', rounds: 1, steps: [
+          { name: '스쿼트', seconds: 60, kind: 'work' },
+          { name: '휴식', seconds: 30, kind: 'rest' },
+          { name: '런지', seconds: 60, kind: 'work', color: '#ffd23f' },
+          { name: '휴식', seconds: 30, kind: 'rest' },
+          { name: '복싱', seconds: 120, kind: 'work', color: '#ff4d5e' },
+        ] },
+        { id: 'interval', name: '인터벌 20·10', rounds: 8, steps: [
+          { name: '전력 운동', seconds: 20, kind: 'work' },
+          { name: '휴식', seconds: 10, kind: 'rest' },
+        ] },
+      ];
+    }
+
+    /** 저장된 단계 하나를 검증한다. 쓸 수 없으면 null. */
+    function cleanStep(step) {
+      if (!step || typeof step.name !== 'string') return null;
+      const seconds = Math.round(Number(step.seconds));
+      if (!(seconds >= minStepSeconds && seconds <= maxStepSeconds)) return null;
+      const kind = step.kind === 'rest' ? 'rest' : 'work';
+      return {
+        name: step.name.trim().slice(0, 16) || kindLabels[kind],
+        seconds,
+        kind,
+        // color가 null이면 종류별 기본색, motion이 'auto'면 이름으로 동작을 찾는다.
+        color: /^#[0-9a-f]{6}$/i.test(step.color) ? step.color.toLowerCase() : null,
+        motion: step.motion === 'none' || motions[step.motion] ? step.motion : 'auto',
+        musicId: typeof step.musicId === 'string' ? step.musicId : null,
+      };
+    }
+
+    /** 저장된 루틴 하나를 검증한다. 쓸 수 없으면 null. */
+    function cleanRoutine(routine) {
+      if (!routine || typeof routine.id !== 'string' || !Array.isArray(routine.steps)) return null;
+      const steps = routine.steps.slice(0, maxSteps).map(cleanStep);
+      if (!steps.length || steps.includes(null)) return null;
+      const rounds = Math.round(Number(routine.rounds));
+      return {
+        id: routine.id,
+        name: String(routine.name || '').trim().slice(0, 20) || '이름 없는 루틴',
+        rounds: rounds >= 1 && rounds <= maxRounds ? rounds : 1,
+        steps,
+      };
+    }
+
+    /** 루틴 저장소를 읽는다. 집중 타이머 설정과 분리된 키를 쓴다. */
+    function loadRoutineStore() {
+      const store = {
+        version: 1, mode: 'focus', selectedId: 'basic',
+        voice: true, beep: true, vibrate: true, prep: true, tracks: [], routines: defaultRoutines().map(cleanRoutine),
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(routineStorageKey));
+        if (!saved || saved.version !== 1 || !Array.isArray(saved.routines)) return store;
+        const routines = saved.routines.slice(0, maxRoutines).map(cleanRoutine).filter(Boolean);
+        if (!routines.length) return store;
+        store.routines = routines;
+        store.mode = saved.mode === 'routine' ? 'routine' : 'focus';
+        store.selectedId = routines.some((routine) => routine.id === saved.selectedId) ? saved.selectedId : routines[0].id;
+        for (const key of ['voice', 'beep', 'vibrate', 'prep']) {
+          if (typeof saved[key] === 'boolean') store[key] = saved[key];
+        }
+        if (Array.isArray(saved.tracks)) {
+          store.tracks = saved.tracks.filter((track) => track && typeof track.id === 'string' && typeof track.name === 'string');
+        }
+        // 보관함에 없는 음악을 가리키는 단계는 음악 없음으로 되돌린다.
+        const trackIds = new Set(store.tracks.map((track) => track.id));
+        for (const step of routines.flatMap((routine) => routine.steps)) {
+          if (!trackIds.has(step.musicId)) step.musicId = null;
+        }
+      } catch {
+        // 저장소를 쓸 수 없는 환경에서는 기본 루틴으로 동작한다.
+      }
+      return store;
+    }
+
+    function persistRoutineStore() {
+      try {
+        localStorage.setItem(routineStorageKey, JSON.stringify(routineStore));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    /** 요소를 만들고 클래스와 글자를 한 번에 지정한다. */
+    function el(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    /** 초를 1:05 형태로 바꾼다. */
+    function formatClock(totalSeconds) {
+      return Math.floor(totalSeconds / 60) + ':' + formatNumber(totalSeconds % 60);
+    }
+
+    /** 초를 "1분 30초"처럼 읽을 수 있는 말로 바꾼다. */
+    function spokenDuration(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return [minutes ? minutes + '분' : '', seconds ? seconds + '초' : ''].filter(Boolean).join(' ');
+    }
+
+    /** 루틴 전체 시간(초). kind를 주면 해당 종류의 단계만 더한다. */
+    function routineSeconds(routine, kind) {
+      const perRound = routine.steps.reduce((sum, step) => sum + (!kind || step.kind === kind ? step.seconds : 0), 0);
+      return perRound * routine.rounds;
+    }
+
+    /** 집중 타이머의 회전 전환이 루틴 화면에서 끼어들지 않게 막는다. */
+    function rotationBlocked() {
+      return appMode !== 'focus' || routineRun !== null || routineEditor.open;
+    }
+
+    /** 단계에 지정한 색. 없으면 종류별 기본색(운동 주황, 휴식 하늘색). */
+    function stepColor(step) {
+      return step.color || (step.kind === 'work' ? '#ff5f2e' : '#8fc7ff');
+    }
+
+    /** 단계에 보여 줄 동작 id. 'auto'면 단계 이름에서 찾고, 없으면 null. */
+    function resolveMotion(step) {
+      if (step.kind === 'prep') return 'rest';
+      if (step.motion && step.motion !== 'auto') return motions[step.motion] ? step.motion : null;
+      const name = step.name.toLowerCase();
+      const match = Object.keys(motions).find((id) => motions[id].words.some((word) => name.includes(word)));
+      return match || (step.kind === 'rest' ? 'rest' : null);
+    }
+
+    /** 단계 길이에 비례하는 띠를 그린다. colored면 단계 색으로 칠한다. */
+    function buildStrip(host, steps, colored = false) {
+      const segments = steps.map((step) => {
+        const segment = document.createElement('i');
+        segment.dataset.kind = step.kind;
+        segment.style.flexGrow = String(step.seconds);
+        if (colored) segment.style.background = step.kind === 'work' || step.color ? stepColor(step) : '';
+        return segment;
+      });
+      // 단계가 아주 많으면 간격이 띠보다 넓어지므로 간격을 줄인다.
+      host.style.gap = segments.length > 150 ? '0' : segments.length > 40 ? '1px' : '';
+      host.replaceChildren(...segments);
+    }
+
+    function routineItem(routine) {
+      const selected = routine.id === routineStore.selectedId;
+      const item = el('div', 'routine-item');
+      item.dataset.id = routine.id;
+      item.dataset.selected = String(selected);
+      const select = el('button', 'routine-select');
+      select.type = 'button';
+      select.setAttribute('aria-pressed', String(selected));
+      // 대표 동작 그림: 선택된 루틴만 움직인다.
+      const thumb = el('span', 'routine-thumb figure-host');
+      const figure = mountFigure(thumb, routine.steps.map(resolveMotion).find((id) => id && id !== 'rest') || 'rest');
+      if (figure) {
+        figure.paused = !selected;
+        routineFigures.set(routine.id, figure);
+      }
+      const heading = el('span', 'routine-heading');
+      heading.append(el('span', 'routine-name', routine.name), el('span', 'routine-total', formatClock(routineSeconds(routine))));
+      const strip = el('span', 'step-strip');
+      strip.setAttribute('aria-hidden', 'true');
+      buildStrip(strip, routine.steps, true);
+      const sequence = routine.steps.map((step) => step.name + ' ' + formatClock(step.seconds)).join(' → ');
+      const body = el('span', 'routine-body');
+      body.append(heading, strip, el('span', 'routine-steps', routine.rounds > 1 ? sequence + ' · ' + routine.rounds + '회 반복' : sequence));
+      select.append(thumb, body);
+      select.addEventListener('click', () => selectRoutine(routine.id));
+      const edit = el('button', 'routine-edit');
+      edit.type = 'button';
+      edit.setAttribute('aria-label', routine.name + ' 편집');
+      const pencil = svgNode('svg', { viewBox: '0 0 16 16', 'aria-hidden': 'true' });
+      pencil.append(svgNode('path', { d: 'm3 10 7.5-7.5 3 3L6 13H3v-3Zm6-6 3 3', 'stroke-linejoin': 'round' }));
+      edit.append(pencil, '편집');
+      edit.addEventListener('click', () => openRoutineEditor(routine.id));
+      item.append(select, edit);
+      return item;
+    }
+
+    function renderRoutineList() {
+      routineFigures.clear();
+      routineList.replaceChildren(...routineStore.routines.map(routineItem));
+      addRoutineButton.disabled = routineStore.routines.length >= maxRoutines;
+      preloadMusic(routineStore.routines.find((routine) => routine.id === routineStore.selectedId));
+    }
+
+    /** 목록을 다시 그리지 않고 선택 표시만 바꿔 초점을 유지한다. */
+    function selectRoutine(id) {
+      routineStore.selectedId = id;
+      persistRoutineStore();
+      for (const item of routineList.children) {
+        const selected = item.dataset.id === id;
+        item.dataset.selected = String(selected);
+        item.firstElementChild.setAttribute('aria-pressed', String(selected));
+        const figure = routineFigures.get(item.dataset.id);
+        if (figure) figure.paused = !selected;
+      }
+      preloadMusic(routineStore.routines.find((routine) => routine.id === id));
+      setText(routineNote, routineHint);
+    }
+
+    function setMode(mode) {
+      appMode = mode;
+      routineStore.mode = mode;
+      persistRoutineStore();
+      for (const [name, tab] of Object.entries(modeTabs)) tab.setAttribute('aria-pressed', String(name === mode));
+      focusPanel.hidden = mode !== 'focus';
+      routinePanel.hidden = mode !== 'routine';
+      // 관리 창은 집중 타이머 전용 설정이라 루틴에서는 숨긴다.
+      openManagerButton.hidden = mode !== 'focus';
+      cancelPendingRotation();
+    }
+
+    function syncCueInputs() {
+      for (const [key, input] of Object.entries(cueInputs)) {
+        input.checked = routineStore[key];
+        input.addEventListener('change', () => {
+          routineStore[key] = input.checked;
+          persistRoutineStore();
+          // 켜는 순간 어떤 소리인지 바로 들려준다.
+          if (key === 'beep' && input.checked) playCue('tick');
+          if (key === 'voice' && input.checked) speak('음성 안내를 켰어요');
+        });
+      }
+      cueInputs.vibrate.closest('label').hidden = typeof navigator.vibrate !== 'function';
+      cueInputs.voice.closest('label').hidden = !window.speechSynthesis;
+    }
+
+    /** 오디오 컨텍스트를 준비한다. 집중 타이머의 완료음과 같은 컨텍스트를 쓴다. */
+    function ensureAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      try {
+        if (!completionAudio || completionAudio.state === 'closed') completionAudio = new AudioContextClass();
+        if (completionAudio.state !== 'running') completionAudio.resume().catch(() => {});
+        return completionAudio;
+      } catch {
+        return null;
+      }
+    }
+
+    function playTone(frequency, offset, length) {
+      const audio = ensureAudio();
+      if (!audio) return;
+      const startTime = audio.currentTime + offset;
+      const oscillator = audio.createOscillator();
+      const volume = audio.createGain();
+      oscillator.frequency.value = frequency;
+      volume.gain.setValueAtTime(.0001, startTime);
+      volume.gain.exponentialRampToValueAtTime(.3, startTime + .015);
+      volume.gain.setValueAtTime(.3, startTime + length * .7);
+      volume.gain.exponentialRampToValueAtTime(.0001, startTime + length);
+      oscillator.connect(volume);
+      volume.connect(audio.destination);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        volume.disconnect();
+      };
+      oscillator.start(startTime);
+      oscillator.stop(startTime + length + .02);
+    }
+
+    /** 단계 종류에 맞는 신호음과 진동을 낸다. */
+    function playCue(kind) {
+      const cue = cues[kind];
+      if (cue.vibrate && routineStore.vibrate && typeof navigator.vibrate === 'function') {
+        try { navigator.vibrate(cue.vibrate); } catch { /* 진동이 막힌 환경에서는 소리만 낸다. */ }
+      }
+      if (!routineStore.beep) return;
+      for (const [frequency, offset, length] of cue.tones) playTone(frequency, offset, length);
+    }
+
+    function koreanUtterance(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 1.05;
+      return utterance;
+    }
+
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      if (!routineStore.voice || !synth || typeof SpeechSynthesisUtterance !== 'function') return;
+      try {
+        if (synth.speaking || synth.pending) synth.cancel();
+        const utterance = koreanUtterance(text);
+        // 안내하는 동안에는 음악 소리를 줄였다가 끝나면 되돌린다.
+        if (musicPlayer) {
+          musicPlayer.volume = .3;
+          utterance.onend = utterance.onerror = () => { musicPlayer.volume = 1; };
+        }
+        synth.speak(utterance);
+      } catch {
+        // 음성 합성을 쓸 수 없으면 신호음만으로 안내한다.
+      }
+    }
+
+    /** 반복 횟수만큼 단계를 펼치고, 설정에 따라 준비 구간을 앞에 붙인다. */
+    function expandRoutine(routine) {
+      const steps = [];
+      if (routineStore.prep) steps.push({ name: '준비', seconds: prepSeconds, kind: 'prep', round: 0 });
+      for (let round = 1; round <= routine.rounds; round++) {
+        for (const step of routine.steps) steps.push({ ...step, round });
+      }
+      return steps;
+    }
+
+    function routineRemainingMs(run) {
+      return run.state === 'running' ? Math.max(0, run.deadline - Date.now()) : run.remainingMs;
+    }
+
+    function positionLabel(run) {
+      const step = run.steps[run.index];
+      if (run.state === 'done') return '';
+      if (step.kind === 'prep') return '곧 시작해요';
+      const offset = run.steps[0].kind === 'prep' ? 1 : 0;
+      let text = (run.index + 1 - offset) + ' / ' + (run.steps.length - offset) + ' 단계';
+      if (run.routine.rounds > 1) text += ' · ' + step.round + '/' + run.routine.rounds + ' 라운드';
+      return text;
+    }
+
+    function nextLabel(run) {
+      if (run.state === 'done') {
+        const rest = routineSeconds(run.routine, 'rest');
+        return '운동 ' + formatClock(routineSeconds(run.routine, 'work')) + (rest ? ' · 휴식 ' + formatClock(rest) : '');
+      }
+      const next = run.steps[run.index + 1];
+      return next ? '다음 · ' + next.name + ' ' + formatClock(next.seconds) : '마지막 단계';
+    }
+
+    function renderRunStrip(run, remainingMs) {
+      const done = run.state === 'done';
+      const fill = 100 - remainingMs / (run.steps[run.index].seconds * 10);
+      Array.from(runStrip.children).forEach((segment, index) => {
+        const value = done || index < run.index ? 100 : index === run.index ? fill : 0;
+        segment.style.setProperty('--fill', value + '%');
+      });
+    }
+
+    function renderRoutineRun() {
+      const run = routineRun;
+      if (!run) return;
+      const done = run.state === 'done';
+      const step = run.steps[run.index];
+      const remainingMs = done ? 0 : routineRemainingMs(run);
+      const clock = formatClock(done ? routineSeconds(run.routine) : Math.ceil(remainingMs / 1000));
+      const label = done ? '완료' : run.state === 'paused' ? '일시멈춤' : kindLabels[step.kind];
+      routineView.dataset.kind = done ? 'done' : step.kind;
+      routineView.dataset.state = run.state;
+      updateRunScene(run);
+      // 단계 이름과 종류가 같으면(휴식·준비) 같은 말을 두 번 쓰지 않는다.
+      setText(runKind, !done && label === step.name ? '' : label);
+      setText(runStep, done ? run.routine.name : step.name);
+      setText(runTimeText, clock);
+      runTime.dataset.long = String(clock.length > 4);
+      runTime.setAttribute('aria-label', done ? '다시 하기' : run.state === 'running' ? '일시멈춤' : '계속하기');
+      setText(runNext, nextLabel(run));
+      setText(runPosition, positionLabel(run));
+      setText(runTotal, done ? '' : '전체 ' + formatClock(Math.ceil(remainingMs / 1000) + run.after[run.index]) + ' 남음');
+      setText(runToggle, done ? '다시 하기' : run.state === 'paused' ? '계속하기' : '일시멈춤');
+      setText(runEnd, done ? '닫기' : '종료');
+      runPrev.hidden = runSkip.hidden = done;
+      renderRunStrip(run, remainingMs);
+      const title = done ? '루틴 완료' : clock + ' · ' + step.name;
+      if (document.title !== title) document.title = title;
+    }
+
+    /** 새 단계에 들어설 때 소리·진동·음성으로 알린다. */
+    function announceStep() {
+      const run = routineRun;
+      const step = run.steps[run.index];
+      const next = run.steps[run.index + 1];
+      run.announced = true;
+      syncMusic();
+      playCue(step.kind);
+      let text = step.name + ', ' + spokenDuration(step.seconds);
+      if (step.kind === 'rest' && next) text += '. 다음은 ' + next.name;
+      if (step.kind === 'prep') text = next ? '준비. 첫 단계는 ' + next.name : '준비';
+      speak(text);
+    }
+
+    /** 단계가 끝나기 3초 전부터 1초마다 짧은 신호를 준다. */
+    function cueCountdown(run) {
+      const second = Math.ceil(run.remainingMs / 1000);
+      if (second === run.lastSecond) return;
+      run.lastSecond = second;
+      if (second > 3 || second < 1) return;
+      playCue('tick');
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        runTimeText.animate?.([{ transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+      }
+    }
+
+    function tickRoutine() {
+      const run = routineRun;
+      if (!run || run.state !== 'running') return;
+      const now = Date.now();
+      let advanced = false;
+      // 화면이 꺼졌다 돌아와도 실제 시각 기준으로 여러 단계를 한 번에 따라잡는다.
+      while (now >= run.deadline) {
+        if (run.index >= run.steps.length - 1) {
+          finishRoutine();
+          return;
+        }
+        run.index++;
+        run.deadline += run.steps[run.index].seconds * 1000;
+        advanced = true;
+      }
+      run.remainingMs = run.deadline - now;
+      if (advanced) {
+        run.lastSecond = null;
+        announceStep();
+      }
+      cueCountdown(run);
+      renderRoutineRun();
+    }
+
+    function resumeRoutine() {
+      const run = routineRun;
+      run.state = 'running';
+      run.deadline = Date.now() + run.remainingMs;
+      clearInterval(run.interval);
+      run.interval = setInterval(tickRoutine, 100);
+      if (!run.announced) announceStep();
+      else syncMusic();
+      renderRoutineRun();
+      updateRoutineWakeLock();
+    }
+
+    function pauseRoutine() {
+      const run = routineRun;
+      run.remainingMs = routineRemainingMs(run);
+      run.state = 'paused';
+      clearInterval(run.interval);
+      window.speechSynthesis?.cancel();
+      syncMusic();
+      renderRoutineRun();
+      updateRoutineWakeLock();
+    }
+
+    function toggleRoutine() {
+      const run = routineRun;
+      if (!run) return;
+      if (run.state === 'done') {
+        routineRun = null;
+        startRoutine();
+      } else if (run.state === 'running') {
+        pauseRoutine();
+      } else {
+        resumeRoutine();
+      }
+    }
+
+    /** 지정한 단계의 처음으로 옮긴다. 멈춘 상태면 멈춘 채로 옮긴다. */
+    function goToStep(index) {
+      const run = routineRun;
+      run.index = index;
+      run.remainingMs = run.steps[index].seconds * 1000;
+      run.lastSecond = null;
+      run.announced = false;
+      if (run.state === 'running') {
+        run.deadline = Date.now() + run.remainingMs;
+        announceStep();
+      }
+      renderRoutineRun();
+    }
+
+    function skipStep() {
+      const run = routineRun;
+      if (!run || run.state === 'done') return;
+      if (run.index >= run.steps.length - 1) finishRoutine();
+      else goToStep(run.index + 1);
+    }
+
+    /** 3초 넘게 진행했으면 현재 단계를 처음부터, 아니면 이전 단계로 간다. */
+    function previousStep() {
+      const run = routineRun;
+      if (!run || run.state === 'done') return;
+      const elapsedMs = run.steps[run.index].seconds * 1000 - routineRemainingMs(run);
+      goToStep(elapsedMs > 3000 || run.index === 0 ? run.index : run.index - 1);
+    }
+
+    function finishRoutine() {
+      const run = routineRun;
+      clearInterval(run.interval);
+      run.state = 'done';
+      run.index = run.steps.length - 1;
+      run.remainingMs = 0;
+      stopMusic();
+      playCue('finish');
+      speak('루틴 완료');
+      renderRoutineRun();
+      updateRoutineWakeLock();
+      runToggle.focus();
+    }
+
+    function startRoutine() {
+      const routine = routineStore.routines.find((item) => item.id === routineStore.selectedId);
+      if (!routine || routineRun) return;
+      const steps = expandRoutine(routine);
+      // after[i]: i번째 단계 뒤에 남은 단계들의 시간 합(초)
+      const after = [];
+      let later = 0;
+      for (let index = steps.length - 1; index >= 0; index--) {
+        after[index] = later;
+        later += steps[index].seconds;
+      }
+      routineRun = {
+        routine, steps, after, index: 0, state: 'paused', remainingMs: steps[0].seconds * 1000,
+        deadline: 0, lastSecond: null, announced: false, interval: 0,
+      };
+      ensureAudio();
+      stopMusic();
+      primeMusic(routineRun);
+      buildStrip(runStrip, steps);
+      setText(runRoutineName, routine.name);
+      setup.hidden = true;
+      routineView.hidden = false;
+      resumeRoutine();
+      runToggle.focus();
+      enterFullscreen();
+    }
+
+    function closeRoutine() {
+      if (!routineRun) return;
+      clearInterval(routineRun.interval);
+      window.speechSynthesis?.cancel();
+      routineRun = null;
+      stopMusic();
+      runFigureHost.replaceChildren();
+      routineView.hidden = true;
+      setup.hidden = false;
+      document.title = '집중 타이머';
+      updateRoutineWakeLock();
+      startRoutineButton.focus();
+    }
+
+    /** 루틴이 도는 동안에만 화면이 꺼지지 않게 한다. */
+    async function updateRoutineWakeLock() {
+      const wanted = routineRun?.state === 'running' && document.visibilityState === 'visible';
+      if (!wanted) {
+        const lock = routineWakeLock;
+        routineWakeLock = null;
+        if (lock) await lock.release().catch(() => {});
+        return;
+      }
+      if (routineWakeLock || routineWakeLockPending || !navigator.wakeLock) return;
+      routineWakeLockPending = true;
+      try {
+        const lock = await navigator.wakeLock.request('screen');
+        if (routineRun?.state !== 'running') {
+          await lock.release();
+          return;
+        }
+        routineWakeLock = lock;
+        lock.addEventListener('release', () => {
+          if (routineWakeLock === lock) routineWakeLock = null;
+        }, { once: true });
+      } catch {
+        // 화면 켜짐 유지를 쓸 수 없어도 타이머는 계속 동작한다.
+      } finally {
+        routineWakeLockPending = false;
+      }
+    }
+
+    // ── 동작 그림 ──
+    /** 현재 시각(figure.time)의 자세를 앞뒤 자세 사이에서 보간해 그린다. */
+    function drawFigure(figure) {
+      const motion = motions[figure.motion];
+      let time = figure.time % motion.total;
+      let index = 0;
+      while (index < motion.seq.length - 1 && time >= motion.seq[index][1]) time -= motion.seq[index++][1];
+      const from = motion.poses[motion.seq[index][0]];
+      const to = motion.poses[motion.seq[(index + 1) % motion.seq.length][0]];
+      const ratio = Math.min(1, time / motion.seq[index][1]);
+      const eased = ratio * ratio * (3 - 2 * ratio);
+      const joints = Array.from({ length: 11 }, (_, joint) => [0, 1].map((axis) => {
+        const start = from[joint * 2 + axis];
+        return start + (to[joint * 2 + axis] - start) * eased;
+      }));
+      const [headAt, neckAt, hipAt, elbow1, hand1, elbow2, hand2, knee1, foot1, knee2, foot2] = joints;
+      // 몸통은 목보다 조금 아래에서 시작해 머리와 어깨 사이에 목이 보이게 한다.
+      const chest = [neckAt[0] + (hipAt[0] - neckAt[0]) * .14, neckAt[1] + (hipAt[1] - neckAt[1]) * .14];
+      // 정면 자세는 어깨와 골반을 좌우로 벌려 팔다리가 겹치지 않게 한다.
+      const spread = motion.flat ? 1 : 0;
+      const side = ([x, y], dx) => [x + dx * spread, y];
+      const line = (...points) => 'M' + points.map(([x, y]) => x.toFixed(1) + ' ' + y.toFixed(1)).join('L');
+      const shoe = motion.foot === 'side' ? 'l5.5 .5' : '';
+      const shapes = {
+        torso: line(chest, hipAt), neck: line(headAt, chest),
+        arm1: line(side(chest, -6), elbow1, hand1), arm2: line(side(chest, 6), elbow2, hand2),
+        thigh1: line(side(hipAt, -2.8), knee1), thigh2: line(side(hipAt, 2.8), knee2),
+        shin1: line(knee1, foot1) + shoe, shin2: line(knee2, foot2) + shoe,
+      };
+      const { parts } = figure;
+      for (const [name, d] of Object.entries(shapes)) parts[name].setAttribute('d', d);
+      for (const [name, [x, y]] of [['head', headAt], ['fist1', hand1], ['fist2', hand2]]) {
+        parts[name].setAttribute('cx', x.toFixed(1));
+        parts[name].setAttribute('cy', y.toFixed(1));
+      }
+      // 바닥에 닿은 손발 아래로 그림자를 깐다.
+      const grounded = [hand1, hand2, foot1, foot2].filter(([, y]) => y > 84).map(([x]) => x);
+      if (parts.shadow && grounded.length) {
+        const left = Math.min(...grounded);
+        const right = Math.max(...grounded);
+        parts.shadow.setAttribute('cx', ((left + right) / 2).toFixed(1));
+        parts.shadow.setAttribute('rx', ((right - left) / 2 + 11).toFixed(1));
+      }
+    }
+
+    function figureFrame(now) {
+      const delta = Math.min(.1, (now - figureLastFrame) / 1000);
+      figureLastFrame = now;
+      for (const figure of figures) {
+        // 화면에서 떼어 낸 그림은 목록에서 지운다.
+        if (!figure.svg.isConnected) figures.delete(figure);
+        else if (!figure.paused) {
+          figure.time += delta;
+          drawFigure(figure);
+        }
+      }
+      if (figures.size) requestAnimationFrame(figureFrame);
+      else figureLoopRunning = false;
+    }
+
+    /** host 안에 동작 그림을 넣는다. 동작이 없으면 비우고 null을 돌려준다. */
+    function mountFigure(host, motionId) {
+      const motion = motions[motionId];
+      host.replaceChildren();
+      if (!motion) return null;
+      const svg = svgNode('svg', { viewBox: '0 0 100 100', class: 'figure-svg', 'aria-hidden': 'true' });
+      const parts = {};
+      if (motion.bar) {
+        svg.append(svgNode('path', { d: 'M18 ' + motion.bar + 'H82', class: 'figure-bar' }));
+      } else {
+        parts.shadow = svgNode('ellipse', { cy: 96, ry: 2.2, class: 'figure-shadow' });
+        svg.append(parts.shadow);
+      }
+      // 옆모습은 뒤쪽 팔다리를 옅게 칠해 앞뒤가 구분되게 한다.
+      const back = svgNode('g', motion.flat ? {} : { class: 'figure-back' });
+      svg.append(back);
+      // [부위, 도형, 굵기(원은 반지름), 놓을 곳] — 아래로 갈수록 위에 그려진다.
+      const layout = [
+        ['arm2', 'path', 5.8, back], ['thigh2', 'path', 9, back], ['shin2', 'path', 7.2, back], ['fist2', 'circle', 3.3, back],
+        ['torso', 'path', 13, svg], ['neck', 'path', 5, svg], ['thigh1', 'path', 9.5, svg], ['shin1', 'path', 7.5, svg],
+        ['arm1', 'path', 6.2, svg], ['head', 'circle', 6.8, svg], ['fist1', 'circle', 3.3, svg],
+      ];
+      for (const [name, tag, size, parent] of layout) {
+        parts[name] = svgNode(tag, tag === 'circle' ? { r: size, class: 'figure-solid' } : { 'stroke-width': size });
+        parent.append(parts[name]);
+      }
+      host.append(svg);
+      // 운동 동작은 장식이 아니라 내용이므로, 기기의 '애니메이션 끄기' 설정과 상관없이 움직인다.
+      const figure = { svg, motion: motionId, parts, paused: false, time: 0 };
+      drawFigure(figure);
+      figures.add(figure);
+      if (!figureLoopRunning) {
+        figureLoopRunning = true;
+        figureLastFrame = performance.now();
+        requestAnimationFrame(figureFrame);
+      }
+      return figure;
+    }
+
+    // ── 진행 화면의 색과 그림 ──
+    /** 배경색 위에서 잘 읽히는 글자색(어두운 색 또는 흰색). */
+    function readableInk(hex) {
+      const [red, green, blue] = [1, 3, 5]
+        .map((start) => parseInt(hex.slice(start, start + 2), 16) / 255)
+        .map((value) => (value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4));
+      return .2126 * red + .7152 * green + .0722 * blue > .2 ? '#120c09' : '#ffffff';
+    }
+
+    /** 단계에 고른 색을 화면에 입힌다. 운동은 배경 전체, 휴식은 숫자 색으로 쓴다. */
+    function applyRunColors(step, active) {
+      const style = routineView.style;
+      for (const name of ['--run-bg', '--run-fg', '--run-time', '--run-dim', '--run-soft']) style.removeProperty(name);
+      if (!active || !step.color) return;
+      if (step.kind !== 'work') {
+        style.setProperty('--run-time', step.color);
+        return;
+      }
+      const ink = readableInk(step.color);
+      style.setProperty('--run-bg', step.color);
+      style.setProperty('--run-fg', ink);
+      style.setProperty('--run-time', ink);
+      style.setProperty('--run-dim', ink + 'cc');
+      style.setProperty('--run-soft', ink + '26');
+    }
+
+    /** 단계나 상태가 바뀔 때만 색과 동작 그림을 갈아 끼운다. */
+    function updateRunScene(run) {
+      const done = run.state === 'done';
+      const sceneKey = run.index + ':' + run.state;
+      if (run.sceneKey === sceneKey) return;
+      run.sceneKey = sceneKey;
+      const step = run.steps[run.index];
+      applyRunColors(step, run.state === 'running');
+      const figureKey = done ? 'done' : String(run.index);
+      if (run.figureKey !== figureKey) {
+        run.figureKey = figureKey;
+        const motionId = done ? 'jack' : resolveMotion(step);
+        run.figure = mountFigure(runFigureHost, motionId);
+        runFigureHost.hidden = !run.figure;
+        run.figure?.svg.setAttribute('preserveAspectRatio', 'xMinYMid meet');
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          runMain.animate?.([{ opacity: .2, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'ease-out' });
+        }
+      }
+      if (run.figure) run.figure.paused = run.state === 'paused';
+    }
+
+    // ── 음악 보관함과 단계별 재생 ──
+    function openMusicDb() {
+      return new Promise((resolve) => {
+        try {
+          const request = indexedDB.open('focus-timer.music', 1);
+          request.onupgradeneeded = () => request.result.createObjectStore('tracks');
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = request.onblocked = () => resolve(null);
+        } catch {
+          // 저장소를 쓸 수 없는 환경에서는 창을 닫기 전까지만 음악을 기억한다.
+          resolve(null);
+        }
+      });
+    }
+
+    function idbResult(request) {
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function trackFileError(file) {
+      if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name)) {
+        return '음악 파일(MP3 등)만 고를 수 있어요.';
+      }
+      if (file.size > maxTrackBytes) return '40MB보다 큰 파일은 쓸 수 없어요.';
+      return '';
+    }
+
+    /** 고른 음악 파일을 보관함에 넣는다. stored가 false면 이번 실행 동안만 유지된다. */
+    async function addTrack(file) {
+      const id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const db = await musicDbReady;
+      let stored = false;
+      if (db) {
+        try {
+          const transaction = db.transaction('tracks', 'readwrite');
+          await new Promise((resolve, reject) => {
+            transaction.oncomplete = resolve;
+            transaction.onabort = () => reject(transaction.error);
+            transaction.objectStore('tracks').put(file, id);
+          });
+          stored = true;
+        } catch {
+          // 용량 부족 등으로 저장에 실패하면 메모리에만 둔다.
+        }
+      }
+      trackBlobs.set(id, file);
+      routineStore.tracks.push({ id, name: file.name.replace(/\.[^.]+$/, '').slice(0, 40) });
+      return { id, stored };
+    }
+
+    /** 음악 파일을 재생할 주소. 파일을 찾지 못하면 null. */
+    async function trackUrl(id) {
+      if (trackUrls.has(id)) return trackUrls.get(id);
+      let blob = trackBlobs.get(id);
+      if (!blob) {
+        const db = await musicDbReady;
+        if (db) blob = await idbResult(db.transaction('tracks').objectStore('tracks').get(id)).catch(() => null);
+      }
+      if (!blob) return null;
+      if (!trackUrls.has(id)) trackUrls.set(id, URL.createObjectURL(blob));
+      return trackUrls.get(id);
+    }
+
+    /** 시작 버튼을 누르는 즉시 재생할 수 있게 루틴의 음악을 미리 읽어 둔다. */
+    function preloadMusic(routine) {
+      if (!routine) return;
+      for (const id of new Set(routine.steps.map((step) => step.musicId).filter(Boolean))) trackUrl(id).catch(() => {});
+    }
+
+    function getMusicPlayer() {
+      if (!musicPlayer) {
+        musicPlayer = new Audio();
+        musicPlayer.loop = true;
+      }
+      return musicPlayer;
+    }
+
+    /**
+     * 현재 단계에 맞춰 음악을 켜거나 끈다.
+     * 앞 단계와 같은 곡이면 끊지 않고 이어서 틀고, 곡이 다르면 처음부터 튼다.
+     */
+    async function syncMusic() {
+      const run = routineRun;
+      const wanted = run && run.state === 'running' ? run.steps[run.index].musicId : null;
+      if (!wanted) {
+        musicPlayer?.pause();
+        return;
+      }
+      const player = getMusicPlayer();
+      if (musicTrackId !== wanted) {
+        const url = await trackUrl(wanted);
+        // 파일을 읽는 사이에 단계가 바뀌었으면 그만둔다.
+        if (!url || routineRun !== run || run.state !== 'running' || run.steps[run.index].musicId !== wanted) return;
+        musicTrackId = wanted;
+        player.src = url;
+      }
+      player.play().catch(() => {});
+    }
+
+    /** 휴대폰 브라우저는 누른 순간에만 재생을 허용하므로, 시작할 때 소리 없이 한 번 틀어 둔다. */
+    function primeMusic(run) {
+      const first = run.steps.find((step) => step.musicId);
+      if (!first || !trackUrls.has(first.musicId)) return;
+      const player = getMusicPlayer();
+      musicTrackId = first.musicId;
+      player.src = trackUrls.get(first.musicId);
+      player.muted = true;
+      player.play().then(() => {
+        player.currentTime = 0;
+        player.muted = false;
+        syncMusic();
+      }, () => {
+        player.muted = false;
+      });
+    }
+
+    function stopMusic() {
+      if (!musicPlayer) return;
+      musicPlayer.pause();
+      musicPlayer.muted = false;
+      musicPlayer.volume = 1;
+      try { musicPlayer.currentTime = 0; } catch { /* 아직 읽지 못한 파일은 되감을 수 없다. */ }
+    }
+
+    /** 루틴과 집중 타이머 안내에서 쓰지 않는 음악을 보관함에서 지운다. */
+    function pruneTracks() {
+      const used = new Set(routineStore.routines.flatMap((routine) => routine.steps.map((step) => step.musicId)));
+      for (const { choice } of currentTimeNotices()) used.add(choice);
+      if (manager.open && timeNoticeDraft) {
+        for (const choice of timeNoticeDraft) used.add(choice);
+      }
+      if (routineEditor.open) {
+        for (const step of editorDraft.steps) used.add(step.musicId);
+      }
+      const unused = routineStore.tracks.filter((track) => !used.has(track.id));
+      if (!unused.length) return;
+      routineStore.tracks = routineStore.tracks.filter((track) => used.has(track.id));
+      persistRoutineStore();
+      for (const { id } of unused) {
+        if (trackUrls.has(id)) URL.revokeObjectURL(trackUrls.get(id));
+        trackUrls.delete(id);
+        trackBlobs.delete(id);
+        if (musicTrackId === id) musicTrackId = null;
+      }
+      musicDbReady.then((db) => {
+        if (!db) return;
+        const store = db.transaction('tracks', 'readwrite').objectStore('tracks');
+        for (const { id } of unused) store.delete(id);
+      }).catch(() => {});
+    }
+
+    // ── 루틴 편집 ──
+    function draftFromRoutine(routine) {
+      return {
+        id: routine.id,
+        panel: null,
+        steps: routine.steps.map((step) => ({
+          name: step.name, kind: step.kind, color: step.color, motion: step.motion, musicId: step.musicId,
+          minutes: String(Math.floor(step.seconds / 60)), seconds: formatNumber(step.seconds % 60),
+        })),
+      };
+    }
+
+    function blankStep(kind) {
+      const options = { kind, color: null, motion: 'auto', musicId: null };
+      return kind === 'rest'
+        ? { name: '휴식', minutes: '0', seconds: '30', ...options }
+        : { name: '', minutes: '1', seconds: '00', ...options };
+    }
+
+    function motionLabel(step) {
+      const id = resolveMotion(step);
+      if (step.motion === 'auto') return '동작 · 자동' + (id ? ' (' + motions[id].name + ')' : '');
+      return '동작 · ' + (id ? motions[id].name : '없음');
+    }
+
+    /** 색상·동작 선택 패널을 열거나 닫는다. 한 번에 하나만 열린다. */
+    function togglePanel(index, type) {
+      const open = editorDraft.panel;
+      editorDraft.panel = open && open.index === index && open.type === type ? null : { index, type };
+      renderStepEditor();
+      stepEditor.children[index].querySelector('[data-panel="' + type + '"]').focus();
+    }
+
+    /** 패널에서 값을 고르면 반영하고 패널을 닫는다. */
+    function pickOption(step, index, field, value) {
+      step[field] = value;
+      const type = editorDraft.panel?.type;
+      editorDraft.panel = null;
+      renderStepEditor();
+      if (type) stepEditor.children[index].querySelector('[data-panel="' + type + '"]').focus();
+    }
+
+    function colorPanel(step, index) {
+      const panel = el('div', 'option-panel swatch-grid');
+      const auto = el('button', 'swatch swatch-auto', '기본');
+      auto.type = 'button';
+      auto.setAttribute('aria-pressed', String(!step.color));
+      auto.addEventListener('click', () => pickOption(step, index, 'color', null));
+      panel.append(auto);
+      for (const [color, name] of stepColors) {
+        const swatch = el('button', 'swatch');
+        swatch.type = 'button';
+        swatch.style.background = color;
+        swatch.setAttribute('aria-label', name);
+        swatch.setAttribute('aria-pressed', String(step.color === color));
+        swatch.addEventListener('click', () => pickOption(step, index, 'color', color));
+        panel.append(swatch);
+      }
+      const custom = el('label', 'swatch swatch-custom');
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = stepColor(step);
+      input.setAttribute('aria-label', '색상 직접 고르기');
+      input.addEventListener('change', () => pickOption(step, index, 'color', input.value));
+      custom.append(input);
+      panel.append(custom);
+      return panel;
+    }
+
+    function motionPanel(step, index) {
+      const panel = el('div', 'option-panel motion-grid');
+      const choices = [['auto', '자동'], ['none', '없음'], ...Object.entries(motions).map(([id, motion]) => [id, motion.name])];
+      for (const [id, name] of choices) {
+        const tile = el('button', 'motion-tile');
+        tile.type = 'button';
+        tile.setAttribute('aria-pressed', String(step.motion === id));
+        const host = el('span', 'figure-host');
+        mountFigure(host, id === 'auto' ? resolveMotion({ ...step, motion: 'auto' }) : id);
+        tile.append(host, el('span', '', name));
+        tile.addEventListener('click', () => pickOption(step, index, 'motion', id));
+        panel.append(tile);
+      }
+      return panel;
+    }
+
+    function musicSelect(step, index) {
+      const select = el('select', 'option-chip');
+      select.setAttribute('aria-label', (index + 1) + '번째 단계 음악');
+      select.append(new Option('♪ 음악 없음', ''));
+      for (const track of routineStore.tracks) select.append(new Option('♪ ' + track.name, track.id));
+      select.append(new Option('＋ MP3 파일 선택…', '+'));
+      select.value = step.musicId || '';
+      select.addEventListener('change', () => {
+        if (select.value === '+') {
+          // 파일 창을 취소해도 선택이 어긋나지 않게 먼저 되돌려 둔다.
+          select.value = step.musicId || '';
+          musicTarget = step;
+          musicFile.value = '';
+          musicFile.click();
+          return;
+        }
+        step.musicId = select.value || null;
+        renderStepEditor();
+        stepEditor.children[index].querySelector('select').focus();
+      });
+      return select;
+    }
+
+    function stepOptions(step, index) {
+      const open = editorDraft.panel?.index === index ? editorDraft.panel.type : null;
+      const options = el('div', 'step-options');
+      const color = el('button', 'option-chip');
+      const swatch = el('span', 'option-swatch');
+      swatch.style.background = stepColor(step);
+      color.append(swatch, '색상');
+      const motion = el('button', 'option-chip', motionLabel(step));
+      for (const [chip, type] of [[color, 'color'], [motion, 'motion']]) {
+        chip.type = 'button';
+        chip.dataset.panel = type;
+        chip.setAttribute('aria-expanded', String(open === type));
+        chip.addEventListener('click', () => togglePanel(index, type));
+      }
+      options.append(color, motion, musicSelect(step, index));
+      if (step.musicId && editorDraft.steps.some((other) => other.musicId !== step.musicId)) {
+        const everywhere = el('button', 'option-chip', '이 음악을 모든 단계에');
+        everywhere.type = 'button';
+        everywhere.addEventListener('click', () => {
+          for (const other of editorDraft.steps) other.musicId = step.musicId;
+          renderStepEditor();
+        });
+        options.append(everywhere);
+      }
+      return options;
+    }
+
+    function editorNotice(message, isError) {
+      editorMessage.toggleAttribute('data-error', isError);
+      setText(editorMessage, message);
+    }
+
+    async function onMusicFile() {
+      const file = musicFile.files[0];
+      const step = musicTarget;
+      if (!file || !step) return;
+      const error = trackFileError(file);
+      if (error) {
+        editorNotice(error, true);
+        return;
+      }
+      const { id, stored } = await addTrack(file);
+      if (!routineEditor.open || !editorDraft.steps.includes(step)) {
+        pruneTracks();
+        return;
+      }
+      step.musicId = id;
+      renderStepEditor();
+      if (!stored) editorNotice('이 환경에서는 음악 파일을 저장할 수 없어, 창을 닫으면 다시 골라야 해요.', false);
+    }
+
+    /** 빈칸은 0으로 보고, 숫자가 아니거나 max를 넘으면 NaN을 돌려준다. */
+    function readCount(text, max) {
+      const value = text.trim();
+      if (value === '') return 0;
+      return /^[0-9]{1,2}$/.test(value) && Number(value) <= max ? Number(value) : NaN;
+    }
+
+    /** 편집 중인 단계의 시간(초). 허용 범위를 벗어나면 0. */
+    function draftSeconds(step) {
+      const total = readCount(step.minutes, 60) * 60 + readCount(step.seconds, 99);
+      return total >= minStepSeconds && total <= maxStepSeconds ? total : 0;
+    }
+
+    function clearEditorMessage() {
+      editorMessage.textContent = '';
+      editorMessage.removeAttribute('data-error');
+    }
+
+    function updateEditorTotal() {
+      const rounds = readCount(editorRounds.value, maxRounds);
+      const seconds = editorDraft.steps.map(draftSeconds);
+      const valid = rounds >= 1 && seconds.every(Boolean);
+      const total = seconds.reduce((sum, value) => sum + value, 0) * rounds;
+      setText(editorTotal, valid
+        ? '총 ' + spokenDuration(total) + ' · ' + seconds.length * rounds + '단계'
+        : '시간과 반복 횟수를 모두 입력하면 총 시간이 표시돼요.');
+    }
+
+    function miniButton(text, label, onClick) {
+      const button = el('button', 'mini-button', text);
+      button.type = 'button';
+      button.setAttribute('aria-label', label);
+      button.addEventListener('click', onClick);
+      return button;
+    }
+
+    /** 입력값을 편집 초안에 바로 반영해, 행을 다시 그려도 입력 중인 값이 남게 한다. */
+    function stepInput(step, field, label, maxLength) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = maxLength;
+      input.value = step[field];
+      input.autocomplete = 'off';
+      input.enterKeyHint = 'done';
+      if (field !== 'name') input.inputMode = 'numeric';
+      input.setAttribute('aria-label', label);
+      input.addEventListener('input', () => {
+        step[field] = input.value;
+        updateEditorTotal();
+        // 이름을 고치면 '자동'으로 찾은 동작 표시도 따라 바뀐다.
+        if (field === 'name') setText(input.closest('.step-row').querySelector('[data-panel="motion"]'), motionLabel(step));
+      });
+      return input;
+    }
+
+    function toggleStepKind(step, index) {
+      step.kind = step.kind === 'work' ? 'rest' : 'work';
+      if (step.kind === 'rest' && !step.name.trim()) step.name = '휴식';
+      else if (step.kind === 'work' && step.name.trim() === '휴식') step.name = '';
+      renderStepEditor();
+      stepEditor.children[index].querySelector('.kind-toggle').focus();
+    }
+
+    function moveStep(index, offset) {
+      const steps = editorDraft.steps;
+      const target = index + offset;
+      [steps[index], steps[target]] = [steps[target], steps[index]];
+      editorDraft.panel = null;
+      renderStepEditor();
+      stepEditor.children[target].querySelector('.step-move button:not(:disabled)')?.focus();
+    }
+
+    function stepRow(step, index) {
+      const count = editorDraft.steps.length;
+      const order = (index + 1) + '번째 단계';
+      const row = el('div', 'step-row');
+      row.dataset.kind = step.kind;
+      const kind = el('button', 'kind-toggle', kindLabels[step.kind]);
+      kind.type = 'button';
+      kind.setAttribute('aria-label', order + ' 종류 ' + kindLabels[step.kind] + ', 눌러서 바꾸기');
+      kind.addEventListener('click', () => toggleStepKind(step, index));
+      const name = stepInput(step, 'name', order + ' 이름', 16);
+      name.className = 'wide-input';
+      name.placeholder = step.kind === 'rest' ? '휴식' : '운동 이름';
+      const remove = miniButton('×', order + ' 삭제', () => {
+        editorDraft.steps.splice(index, 1);
+        editorDraft.panel = null;
+        renderStepEditor();
+      });
+      remove.disabled = count === 1;
+      const time = el('div', 'step-time');
+      time.append(stepInput(step, 'minutes', order + ' 분', 2), '분', stepInput(step, 'seconds', order + ' 초', 2), '초');
+      const move = el('div', 'step-move');
+      const up = miniButton('↑', order + ' 위로', () => moveStep(index, -1));
+      const down = miniButton('↓', order + ' 아래로', () => moveStep(index, 1));
+      up.disabled = index === 0;
+      down.disabled = index === count - 1;
+      move.append(up, down);
+      row.append(kind, name, remove, time, move, stepOptions(step, index));
+      const open = editorDraft.panel?.index === index ? editorDraft.panel.type : null;
+      if (open === 'color') row.append(colorPanel(step, index));
+      if (open === 'motion') row.append(motionPanel(step, index));
+      return row;
+    }
+
+    function renderStepEditor() {
+      stepEditor.replaceChildren(...editorDraft.steps.map(stepRow));
+      addWorkStep.disabled = addRestStep.disabled = editorDraft.steps.length >= maxSteps;
+      clearEditorMessage();
+      updateEditorTotal();
+    }
+
+    function addStep(kind) {
+      if (editorDraft.steps.length >= maxSteps) return;
+      editorDraft.steps.push(blankStep(kind));
+      renderStepEditor();
+      stepEditor.lastElementChild.querySelector('input').focus();
+    }
+
+    /** id가 없으면 새 루틴을 만드는 창으로 연다. */
+    function openRoutineEditor(id) {
+      const source = routineStore.routines.find((routine) => routine.id === id);
+      editorDraft = source ? draftFromRoutine(source) : { id: null, panel: null, steps: [blankStep('work'), blankStep('rest')] };
+      setText(editorTitle, source ? '루틴 편집' : '새 루틴');
+      editorName.value = source ? source.name : '';
+      editorRounds.value = String(source ? source.rounds : 1);
+      editorRounds.removeAttribute('aria-invalid');
+      deleteRoutineButton.hidden = !source || routineStore.routines.length < 2;
+      deleteRoutineButton.dataset.armed = 'false';
+      setText(deleteRoutineButton, '이 루틴 삭제');
+      renderStepEditor();
+      routineEditor.showModal();
+    }
+
+    function editorError(input, message) {
+      editorMessage.setAttribute('data-error', '');
+      setText(editorMessage, message);
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+      input.select();
+    }
+
+    function saveRoutineEditor() {
+      const rounds = readCount(editorRounds.value, maxRounds);
+      if (!(rounds >= 1)) {
+        editorError(editorRounds, '전체 반복은 1회부터 ' + maxRounds + '회 사이로 입력하세요.');
+        return;
+      }
+      const steps = [];
+      for (const [index, step] of editorDraft.steps.entries()) {
+        const seconds = draftSeconds(step);
+        if (!seconds) {
+          editorError(stepEditor.children[index].querySelector('.step-time input'), '단계 시간은 5초부터 60분 사이로 입력하세요.');
+          return;
+        }
+        steps.push({
+          name: step.name.trim().slice(0, 16) || kindLabels[step.kind], seconds, kind: step.kind,
+          color: step.color, motion: step.motion, musicId: step.musicId,
+        });
+      }
+      const routine = {
+        id: editorDraft.id || 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name: editorName.value.trim().slice(0, 20) || '루틴 ' + (routineStore.routines.length + (editorDraft.id ? 0 : 1)),
+        rounds,
+        steps,
+      };
+      const position = routineStore.routines.findIndex((item) => item.id === routine.id);
+      if (position === -1) routineStore.routines.push(routine);
+      else routineStore.routines[position] = routine;
+      routineStore.selectedId = routine.id;
+      const saved = persistRoutineStore();
+      renderRoutineList();
+      routineEditor.close();
+      setText(routineNote, saved ? '루틴을 저장했어요.' : '루틴을 적용했어요. 이 환경에서는 다시 열면 초기화될 수 있어요.');
+    }
+
+    /** 실수로 지우지 않도록 두 번 눌러야 삭제된다. */
+    function deleteRoutine() {
+      if (deleteRoutineButton.dataset.armed !== 'true') {
+        deleteRoutineButton.dataset.armed = 'true';
+        setText(deleteRoutineButton, '한 번 더 누르면 삭제돼요');
+        return;
+      }
+      routineStore.routines = routineStore.routines.filter((routine) => routine.id !== editorDraft.id);
+      routineStore.selectedId = routineStore.routines[0].id;
+      persistRoutineStore();
+      renderRoutineList();
+      routineEditor.close();
+      setText(routineNote, '루틴을 삭제했어요.');
+    }
+
+    modeTabs.focus.addEventListener('click', () => setMode('focus'));
+    modeTabs.routine.addEventListener('click', () => setMode('routine'));
+    addRoutineButton.addEventListener('click', () => openRoutineEditor(null));
+    startRoutineButton.addEventListener('click', startRoutine);
+    runToggle.addEventListener('click', toggleRoutine);
+    runTime.addEventListener('click', toggleRoutine);
+    runPrev.addEventListener('click', previousStep);
+    runSkip.addEventListener('click', skipStep);
+    runEnd.addEventListener('click', closeRoutine);
+    addWorkStep.addEventListener('click', () => addStep('work'));
+    addRestStep.addEventListener('click', () => addStep('rest'));
+    editorRounds.addEventListener('input', updateEditorTotal);
+    deleteRoutineButton.addEventListener('click', deleteRoutine);
+    musicFile.addEventListener('change', onMusicFile);
+    // 저장하든 취소하든 창이 닫히면 쓰지 않는 음악 파일을 정리한다.
+    routineEditor.addEventListener('close', pruneTracks);
+    document.getElementById('close-routine-editor').addEventListener('click', () => routineEditor.close());
+    document.getElementById('cancel-routine-editor').addEventListener('click', () => routineEditor.close());
+    document.getElementById('save-routine-editor').addEventListener('click', saveRoutineEditor);
+    routineEditor.addEventListener('input', (event) => {
+      event.target.removeAttribute('aria-invalid');
+      clearEditorMessage();
+    });
+    routineEditor.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+        event.preventDefault();
+        event.target.blur();
+      }
+    });
+    // 진행 중 키보드 조작: 좌우 화살표로 단계 이동, 스페이스로 멈춤/계속
+    document.addEventListener('keydown', (event) => {
+      if (!routineRun || routineRun.state === 'done') return;
+      if (event.key === 'ArrowRight') skipStep();
+      else if (event.key === 'ArrowLeft') previousStep();
+      else if (event.key === ' ' && event.target.tagName !== 'BUTTON') {
+        event.preventDefault();
+        toggleRoutine();
       }
     });
 
@@ -2017,9 +4103,16 @@
     }
 
     duration.value = formatNumber(settings.normalMinutes);
+    for (const { choice } of currentTimeNotices()) {
+      if (isTimeNoticeMusic(choice)) trackUrl(choice).catch(() => {});
+    }
     resetRotationBaseline();
     renderPresets();
     refreshDuration();
+    renderRoutineList();
+    syncCueInputs();
+    setText(routineNote, routineHint);
+    setMode(appMode);
     connectSensors();
     enterFullscreen();
   </script>
